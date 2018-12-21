@@ -10,7 +10,7 @@
 
 
 This is a simple Active Record Pattern compatible with PHP 7+ that provides a simple 
-and _secure_ interaction with your database using mysqli_* functions at 
+and _secure_ interaction with your database using :gem: ["Simple MySQLi"](https://github.com/voku/simple-mysqli/) at 
 its core. This is perfect for small scale applications such as cron jobs, 
 facebook canvas campaigns or micro frameworks or sites. 
 
