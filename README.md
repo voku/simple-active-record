@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.com/voku/simple-active-record.svg?branch=master)](https://travis-ci.com/voku/simple-active-record)
 [![Coverage Status](https://coveralls.io/repos/github/voku/simple-active-record/badge.svg?branch=master)](https://coveralls.io/github/voku/simple-active-record?branch=master)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/797ba3ba657d4e0e86f0bade6923fdec)](https://www.codacy.com/app/voku/simple-active-record)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/db0b681fd4bf434eaceaa5213698ea3e)](https://www.codacy.com/app/voku/simple-active-record)
 [![Latest Stable Version](https://poser.pugx.org/voku/simple-active-record/v/stable)](https://packagist.org/packages/voku/simple-active-record) 
 [![Total Downloads](https://poser.pugx.org/voku/simple-active-record/downloads)](https://packagist.org/packages/voku/simple-active-record)
 [![License](https://poser.pugx.org/voku/simple-active-record/license)](https://packagist.org/packages/voku/simple-active-record)
