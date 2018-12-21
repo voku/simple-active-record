@@ -1,10 +1,9 @@
-[![Build Status](https://travis-ci.org/voku/simple-mysqli.svg?branch=master)](https://travis-ci.org/voku/simple-mysqli)
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fvoku%2Fsimple-mysqli.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fvoku%2Fsimple-mysqli?ref=badge_shield)
-[![Coverage Status](https://coveralls.io/repos/github/voku/simple-mysqli/badge.svg?branch=master)](https://coveralls.io/github/voku/simple-mysqli?branch=master)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/797ba3ba657d4e0e86f0bade6923fdec)](https://www.codacy.com/app/voku/simple-mysqli)
-[![Latest Stable Version](https://poser.pugx.org/voku/simple-mysqli/v/stable)](https://packagist.org/packages/voku/simple-mysqli) 
-[![Total Downloads](https://poser.pugx.org/voku/simple-mysqli/downloads)](https://packagist.org/packages/voku/simple-mysqli)
-[![License](https://poser.pugx.org/voku/simple-mysqli/license)](https://packagist.org/packages/voku/simple-mysqli)
+[![Build Status](https://travis-ci.com/voku/simple-active-record.svg?branch=master)](https://travis-ci.com/voku/simple-active-record)
+[![Coverage Status](https://coveralls.io/repos/github/voku/simple-active-record/badge.svg?branch=master)](https://coveralls.io/github/voku/simple-active-record?branch=master)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/797ba3ba657d4e0e86f0bade6923fdec)](https://www.codacy.com/app/voku/simple-active-record)
+[![Latest Stable Version](https://poser.pugx.org/voku/simple-active-record/v/stable)](https://packagist.org/packages/voku/simple-active-record) 
+[![Total Downloads](https://poser.pugx.org/voku/simple-active-record/downloads)](https://packagist.org/packages/voku/simple-active-record)
+[![License](https://poser.pugx.org/voku/simple-active-record/license)](https://packagist.org/packages/voku/simple-active-record)
 
 :ring: Simple Active Record
 ===================
