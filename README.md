@@ -479,58 +479,7 @@ var_dump($contact->fetch());
 var_dump($contact->user);
 ```
 
-## Logging and Errors
-
-You can hook into the "DB"-Class, so you can use your personal "Logger"-Class. But you have to cover the methods:
-
-```php
-$this->trace(string $text, string $name) { ... }
-$this->debug(string $text, string $name) { ... }
-$this->info(string $text, string $name) { ... }
-$this->warn(string $text, string $name) { ... } 
-$this->error(string $text, string $name) { ... }
-$this->fatal(string $text, string $name) { ... }
-```
-
-You can also disable the logging of every sql-query, with the "getInstance()"-parameter "logger_level" from "DB"-Class.
-If you set "logger_level" to something other than "TRACE" or "DEBUG", the "DB"-Class will log only errors anymore.
-
-```php
-DB::getInstance(
-    getConfig('db', 'hostname'),        // hostname
-    getConfig('db', 'username'),        // username
-    getConfig('db', 'password'),        // password
-    getConfig('db', 'database'),        // database
-    getConfig('db', 'port'),            // port
-    getConfig('db', 'charset'),         // charset
-    true,                               // exit_on_error
-    true,                               // echo_on_error
-    'cms\Logger',                       // logger_class_name
-    getConfig('logger', 'level'),       // logger_level | 'TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'
-    getConfig('session', 'db')          // session_to_db
-);
-```
-
-Showing the query log: The log comes with the SQL executed, the execution time and the result row count.
-
-```php
-  print_r($db->log());
-```
-
-To debug mysql errors, use `$db->errors()` to fetch all errors (returns false if there are no errors) or `$db->lastError()` for information about the last error. 
-
-```php
-  if ($db->errors()) {
-    echo $db->lastError();
-  }
-```
-
-But the easiest way for debugging is to configure "DB"-Class via "DB::getInstance()" to show errors and exit on error (see the example above). Now you can see SQL-errors in your browser if you are working on "localhost" or you can implement your own "checkForDev()" via a simple function, you don't need to extend the "Debug"-Class. If you will receive error-messages via e-mail, you can implement your own "mailToAdmin()"-function instead of extending the "Debug"-Class.
-
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md).
 
-
-## License
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fvoku%2Fsimple-mysqli.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fvoku%2Fsimple-mysqli?ref=badge_large)
