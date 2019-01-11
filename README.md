@@ -4,10 +4,10 @@
 [![Latest Stable Version](https://poser.pugx.org/voku/simple-active-record/v/stable)](https://packagist.org/packages/voku/simple-active-record) 
 [![Total Downloads](https://poser.pugx.org/voku/simple-active-record/downloads)](https://packagist.org/packages/voku/simple-active-record)
 [![License](https://poser.pugx.org/voku/simple-active-record/license)](https://packagist.org/packages/voku/simple-active-record)
+[![Donate to this project using Paypal](https://img.shields.io/badge/paypal-donate-yellow.svg)](https://www.paypal.me/moelleken)
+[![Donate to this project using Patreon](https://img.shields.io/badge/patreon-donate-yellow.svg)](https://www.patreon.com/voku)
 
-:ring: Simple Active Record
-===================
-
+# :ring: Simple Active Record
 
 This is a simple Active Record Pattern compatible with PHP 7+ that provides a simple 
 and _secure_ interaction with your database using :gem: ["Simple MySQLi"](https://github.com/voku/simple-mysqli/) at 
@@ -15,7 +15,7 @@ its core. This is perfect for small scale applications such as cron jobs,
 facebook canvas campaigns or micro frameworks or sites. 
 
 
-## Get "Simple Active Record"
+### Get "Simple Active Record"
 
 You can download it from here, or require it using [composer](https://packagist.org/packages/voku/simple-mysqli).
 ```json
@@ -26,7 +26,7 @@ You can download it from here, or require it using [composer](https://packagist.
   }
 ```
 
-## Install via "composer require"
+### Install via "composer require"
 ```shell
   composer require voku/simple-active-record
 ```
@@ -66,7 +66,7 @@ You can download it from here, or require it using [composer](https://packagist.
 * [Changelog](#changelog)
 
 
-## Starting the driver
+### Starting the driver
 ```php
   use voku\db\DB;
 
@@ -78,11 +78,11 @@ You can download it from here, or require it using [composer](https://packagist.
   // $db = DB::getInstance('localhost', 'root', '', 'test');
 ```
 
-## Multiton && Singleton
+### Multiton && Singleton
 
 You can use ```DB::getInstance()``` without any parameters and you will get your (as "singleton") first initialized connection. Or you can change the parameter and you will create an new "multiton"-instance which works like an singleton, but you need to use the same parameters again, otherwise (without the same parameter) you will get an new instance. 
 
-## Doctrine/DBAL as parent driver
+### Doctrine/DBAL as parent driver
 ```php
   use voku\db\DB;
 
@@ -106,7 +106,7 @@ You can use ```DB::getInstance()``` without any parameters and you will get your
   $db = DB::getInstanceDoctrineHelper($doctrineConnection);
 ```
 
-## Using the "ActiveRecord"-Class (OOP database-access)
+### Using the "ActiveRecord"-Class (OOP database-access)
 
 A simple implement of active record pattern via Arrayy.
 
@@ -479,7 +479,22 @@ var_dump($contact->fetch());
 var_dump($contact->user);
 ```
 
-## Changelog
+### Changelog
 
 See [CHANGELOG.md](CHANGELOG.md).
 
+### Support
+
+For support and donations please visit [Github](https://github.com/voku/simple-active-record/) | [Issues](https://github.com/voku/simple-active-record/issues) | [PayPal](https://paypal.me/moelleken) | [Patreon](https://www.patreon.com/voku).
+
+For status updates and release announcements please visit [Releases](https://github.com/voku/simple-active-record/releases) | [Twitter](https://twitter.com/suckup_de) | [Patreon](https://www.patreon.com/voku/posts).
+
+For professional support please contact [me](https://about.me/voku).
+
+### Thanks
+
+- Thanks to [GitHub](https://github.com) (Microsoft) for hosting the code and a good infrastructure including Issues-Managment, etc.
+- Thanks to [IntelliJ](https://www.jetbrains.com) as they make the best IDEs for PHP and they gave me an open source license for PhpStorm!
+- Thanks to [Travis CI](https://travis-ci.com/) for being the most awesome, easiest continous integration tool out there!
+- Thanks to [StyleCI](https://styleci.io/) for the simple but powerfull code style check.
+- Thanks to [PHPStan](https://github.com/phpstan/phpstan) && [Psalm](https://github.com/vimeo/psalm) for relly great Static analysis tools and for discover bugs in the code!
