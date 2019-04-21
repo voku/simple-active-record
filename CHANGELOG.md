@@ -1,6 +1,17 @@
 Changelog
 =========
 
+1.1.0 (2019-04-21)
+------------------
+- add "ActiveRecord" class const for SQL building 
+- add a "ActiveRecord->addRelation()" method + examples in the README
+- add support for "Hashids" - generate YouTube-like ids from numbers. Use it when you don't want to expose your database numeric ids to users
+  -> add "ActiveRecord->getHashId()": convert primary-key into hashid
+  -> add "ActiveRecord->convertIdIntoHashId()": convert any id into hashid
+  -> add "ActiveRecord->fetchByHashId()": same as fetchBy() but with a hashid parameter 
+  -> add "ActiveRecord->fetchByHashIdIfExists()": same as fetchByIfExists() with a hashid parameter
+- fix bugs reported by phpstan (level 7)
+
 1.0.0 (2018-12-21)
 ------------------
 
