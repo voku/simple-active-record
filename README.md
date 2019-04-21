@@ -36,11 +36,11 @@ You can download it from here, or require it using [composer](https://packagist.
 * [Doctrine/DBAL as parent driver](#doctrinedbal-as-parent-driver)
 * [Using the "ActiveRecord"-Class (OOP database-access)](#using-the-activerecord-class-oop-database-access)
     * [setDb(DB $db)](#setdbdb-db)
-    * [insert() : boolean|int](#insert--booleanint)
-    * [fetch(integer $id = null) : boolean|\ActiveRecord](#fetchinteger--id--null--booleanactiverecord)
+    * [insert() : bool|int](#insert--boolint)
+    * [fetch(integer $id = null) : bool|\ActiveRecord](#fetchinteger--id--null--boolactiverecord)
     * [fetchAll() : $this[]](#fetchall--this)
-    * [update() : boolean|int](#update--booleanint)
-    * [delete() : boolean](#update--booleanint)
+    * [update() : bool|int](#update--boolint)
+    * [delete() : bool](#update--boolint)
   * [Active Record | SQL part functions](#active-record--sql-part-functions)
     * [select()](#select)
     * [from()](#from)
@@ -118,7 +118,7 @@ set the DB connection.
   ActiveRecord::setDb($db);
 ```
 
-#### insert() : boolean|int
+#### insert() : bool|int
 This function can build insert SQL queries and can insert the current record into database.
 If insert was successful, it will return the new id, otherwise it will return false or true (if there are no dirty data).
 
@@ -133,14 +133,14 @@ If insert was successful, it will return the new id, otherwise it will return fa
   var_dump($user->getPrimaryKey()); // also the new id 
 ```
 
-#### fetch(integer  $id = null) : boolean|\ActiveRecord
+#### fetch(integer  $id = null) : bool|\ActiveRecord
 This function can fetch one record and assign in to current object.
 If you call this function with the $id parameter, it will fetch records by using the current primary-key-name.
 
 ```php
   $user = new User();
 
-  $user->notnull('id')->order('id desc')->fetch();
+  $user->notnull('id')->orderBy('id desc')->fetch();
   
   // OR //
   
@@ -153,6 +153,15 @@ If you call this function with the $id parameter, it will fetch records by using
   // OR //
   
   $user->fetchByIdIfExists(1); // return NULL if the ID did not exists
+  
+    
+  // OR //
+  
+  $user->fetchByHashId('fsfsdwldasdar'); // thows "FetchingException" if the ID did not exists
+  
+  // OR //
+  
+  $user->fetchByHashIdIfExists('fsfsdwldasdar'); // return NULL if the ID did not exists
   
   var_dump($user->id); // (int) 1
   var_dump($user->getPrimaryKey()); // (int) 1
@@ -178,18 +187,18 @@ This function can fetch all records in the database and will return an array of 
   var_dump($users[0]->getPrimaryKey()); // (int) 1
 ```
 
-#### update() : boolean|int
+#### update() : bool|int
 This function can build update SQL queries and can update the current record in database, just write the dirty data into database.
 If update was successful, it will return the affected rows as int, otherwise it will return false or true (if there are no dirty data).
 
 ```php
   $user = new User();
-  $user->notnull('id')->orderby('id desc')->fetch();
+  $user->notnull('id')->orderBy('id desc')->fetch();
   $user->email = 'test@example.com';
   $user->update();
 ```
 
-#### delete() : boolean
+#### delete() : bool
 This function can delete the current record in the database. 
 
 ### Active Record | SQL part functions
@@ -226,20 +235,20 @@ This function can set where conditions.
   $user->where('id=1 AND name="demo"')->fetch();
 ```
 
-#### group()
+#### groupBy()
 This function can set the "group by" conditions.
 
 ```php
   $user = new User();
-  $user->select('count(1) as count')->group('name')->fetchAll();
+  $user->select('count(1) as count')->groupBy('name')->fetchAll();
 ```
 
-#### order()
+#### orderBy()
 This function can set the "order by" conditions.
 
 ```php
   $user = new User();
-  $user->order('name DESC')->fetch();
+  $user->orderBy('name DESC')->fetch();
 ```
 
 #### limit()
@@ -247,7 +256,7 @@ This function can set the "limit" conditions.
 
 ```php
   $user = new User();
-  $user->order('name DESC')->limit(0, 1)->fetch();
+  $user->orderBy('name DESC')->limit(0, 1)->fetch();
 ```
 
 ### Active Record | WHERE conditions
@@ -330,7 +339,7 @@ This function can set the "limit" conditions.
 ```
 
 
-### Active Record |  Demo
+### Active Record | Demo
 
 #### Include && Init
 
@@ -355,37 +364,43 @@ use voku\db\ActiveRecord;
  * @property string    $name
  * @property string    $password
  * @property Contact[] $contacts
+ * @property Contact   $contacts_with_backref
  * @property Contact   $contact
  */
 class User extends ActiveRecord {
   public $table = 'user';
+
   public $primaryKey = 'id';
   
-  public $relations = [
-    // format is [$relation_type, $child_namespaced_classname, $foreign_key_of_child]
-    'contacts' => [
-      self::HAS_MANY, 
-      'demo\Contact', 
-      'user_id'
-    ],
-    'contacts_with_backref' => [
-        self::HAS_MANY,
-        'demo\Contact',
-        'user_id',
-        null,
-        'user',
-    ],
-    // format may be [$relation_type, $child_namespaced_classname, $foreign_key_of_child, $array_of_sql_part_functions]
-    'contact' => [
-      self::HAS_ONE, 
-      'demo\Contact', 
-      'user_id', 
-      [
-        'where' => '1', 
-        'order' => 'id desc',
-      ],
-    ],
-  ];
+  protected function init()
+  {
+      $this->addRelation(
+          'contacts',
+          self::HAS_MANY,
+          FoobarContact::class,
+          'user_id'
+      );
+
+      $this->addRelation(
+          'contacts_with_backref',
+          self::HAS_MANY,
+          FoobarContact::class,
+          'user_id',
+          null,
+          'user'
+      );
+
+      $this->addRelation(
+        'contact',
+          self::HAS_ONE,
+          FoobarContact::class,
+          'user_id',
+          [
+              self::SQL_WHERE => '1 = 1',
+              self::SQL_ORDER => 'id desc',
+          ]
+      );
+  }
 }
 
 /**
@@ -393,20 +408,32 @@ class User extends ActiveRecord {
  * @property int    $user_id
  * @property string $email
  * @property string $address
+ * @property User   $user_with_backref
  * @property User   $user
  */
 class Contact extends ActiveRecord {
   public $table = 'contact';
+
   public $primaryKey = 'id';
   
-  public $relations = [
-    // format is [$relation_type, $parent_namespaced_classname, $foreign_key_in_current_table]
-    'user' => [
-      self::BELONGS_TO, 
-      'demo\User', 
-      'user_id'
-    ],
-  ];
+  protected function init()
+  {
+      $this->addRelation(
+          'user_with_backref',
+          self::BELONGS_TO,
+          FoobarUser::class,
+          'user_id',
+          null,
+          'contact'
+      );
+
+      $this->addRelation(
+          'user',
+          self::BELONGS_TO,
+          FoobarUser::class,
+          'user_id'
+      );
+  }
 }
 ```
 
@@ -462,7 +489,7 @@ use demo\Contact;
 $user = new User();
 
 // fetch one user
-var_dump($user->notnull('id')->orderby('id desc')->fetch());
+var_dump($user->notnull('id')->orderBy('id desc')->fetch());
 
 echo "\nContact of User # {$user->id}\n";
 // get contacts by using relation:

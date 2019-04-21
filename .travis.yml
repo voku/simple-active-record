@@ -65,13 +65,15 @@ before_script:
   - travis_retry mysql -e 'CREATE DATABASE mysql_test;'
   - travis_retry mysql -e 'USE mysql_test; CREATE TABLE test_page ( page_id int(16) NOT NULL auto_increment, page_template varchar(255), page_type varchar(255), PRIMARY KEY (page_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'
   - travis_retry composer self-update
-  - travis_retry composer require satooshi/php-coveralls:1.0.0
+  - travis_retry composer require satooshi/php-coveralls
+  - travis_retry composer require phpstan/phpstan-shim
   - travis_retry composer install --no-interaction --prefer-source
   - composer dump-autoload -o
 
 script:
   - mkdir -p build/logs
   - php vendor/bin/phpunit --verbose -c phpunit.xml
+  - php vendor/bin/phpstan analyse --level=7 --configuration=phpstan.neon src
 
 after_script:
   - php vendor/bin/coveralls -v

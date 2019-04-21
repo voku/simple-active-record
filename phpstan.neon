@@ -1,0 +1,11 @@
+parameters:
+    reportUnmatchedIgnoredErrors: false
+    excludes_analyse:
+        - %rootDir%/vendor/*
+        - %rootDir%/tests/*
+    autoload_files:
+        - %rootDir%/vendor/autoload.php
+    ignoreErrors:
+        - '/Parameter #1 \$function of function call_user_func_array expects callable\(\)/'
+        - '/but returns (\()*array<static\(voku\\db\\ActiveRecord/'
+        - '/Cannot call method implode\(\) on string\|voku\\db\\ActiveRecordExpressions/'

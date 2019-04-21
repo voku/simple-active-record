@@ -146,7 +146,7 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
      *
      * @return FoobarContact
      */
-    public function testInsertContact($user)
+    public function testInsertContact($user): FoobarContact
     {
         $contact = new FoobarContact();
         $contact->address = 'test';
@@ -435,7 +435,7 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
      *
      * @param FoobarContact $contact
      */
-    public function testTestfetchByIdIfExists($contact)
+    public function testFetchByIdIfExists($contact)
     {
         $user = new FoobarUser();
         $result = $user->fetchByIdIfExists($contact->user_id);
@@ -447,10 +447,40 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
         static::assertSame('demo1', $user->name);
     }
 
-    public function testfetchByIdIfExistsFail()
+    public function testFetchByIdIfExistsFail()
     {
         $userNon = new FoobarUser();
         $result = $userNon->fetchByIdIfExists(-1);
+
+        // name etc. will not stored in user data array.
+        static::assertNull($result);
+        static::assertNull($userNon->id);
+        static::assertNull($userNon->id);
+        static::assertNull($userNon->getPrimaryKey());
+        static::assertNull($userNon->name);
+    }
+
+    /**
+     * @depends testInsertContact
+     *
+     * @param FoobarContact $contact
+     */
+    public function testFetchByHashIdIfExists($contact)
+    {
+        $user = new FoobarUser();
+        $result = $user->fetchByHashIdIfExists($contact->convertIdIntoHashId($contact->user_id));
+
+        // name etc. will stored in user data array.
+        static::assertSame($user, $result);
+        static::assertSame($contact->user_id, $user->id);
+        static::assertSame($contact->user_id, $user->getPrimaryKey());
+        static::assertSame('demo1', $user->name);
+    }
+
+    public function testFetchByHashIdIfExistsFail()
+    {
+        $userNon = new FoobarUser();
+        $result = $userNon->fetchByHashIdIfExists(-1);
 
         // name etc. will not stored in user data array.
         static::assertNull($result);
@@ -474,6 +504,20 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
         static::assertSame($contact->user_id, $user->id);
         static::assertSame($contact->user_id, $user->getPrimaryKey());
         static::assertSame('demo1', $user->name);
+    }
+
+    /**
+     * @depends testInsertContact
+     *
+     * @param FoobarContact $contact
+     */
+    public function testGroup($contact)
+    {
+        $users = (new FoobarUser())->select('count(1) as count')->groupBy('name')->fetchAll();
+
+        foreach ($users as $userTmp) {
+            static::assertInstanceOf(FoobarUser::class, $userTmp);
+        }
     }
 
     /**

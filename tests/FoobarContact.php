@@ -22,18 +22,22 @@ class FoobarContact extends ActiveRecord
 
     public $primaryKeyName = 'id';
 
-    public $relations = [
-        'user_with_backref' => [
+    protected function init()
+    {
+        $this->addRelation(
+            'user_with_backref',
             self::BELONGS_TO,
             FoobarUser::class,
             'user_id',
             null,
-            'contact',
-        ],
-        'user' => [
+            'contact'
+        );
+
+        $this->addRelation(
+            'user',
             self::BELONGS_TO,
             FoobarUser::class,
-            'user_id',
-        ],
-    ];
+            'user_id'
+        );
+    }
 }

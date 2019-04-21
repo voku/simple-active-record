@@ -22,24 +22,33 @@ class FoobarUser extends ActiveRecord
 
     public $primaryKeyName = 'id';
 
-    public $relations = [
-        'contacts' => [
+    protected function init()
+    {
+        $this->addRelation(
+            'contacts',
             self::HAS_MANY,
             FoobarContact::class,
-            'user_id',
-        ],
-        'contacts_with_backref' => [
+            'user_id'
+        );
+
+        $this->addRelation(
+            'contacts_with_backref',
             self::HAS_MANY,
             FoobarContact::class,
             'user_id',
             null,
-            'user',
-        ],
-        'contact' => [
+            'user'
+        );
+
+        $this->addRelation(
+          'contact',
             self::HAS_ONE,
             FoobarContact::class,
             'user_id',
-            ['where' => '1', 'orderBy' => 'id desc'],
-        ],
-    ];
+            [
+                self::SQL_WHERE => '1 = 1',
+                self::SQL_ORDER => 'id desc',
+            ]
+        );
+    }
 }

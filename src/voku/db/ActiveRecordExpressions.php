@@ -21,7 +21,7 @@ class ActiveRecordExpressions extends Arrayy
     /**
      * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
         return $this->source . ' ' . $this->operator . ' ' . $this->target;
     }

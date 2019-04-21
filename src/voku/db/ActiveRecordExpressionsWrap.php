@@ -16,13 +16,13 @@ class ActiveRecordExpressionsWrap extends ActiveRecordExpressions
     /**
      * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
         // init
         $str = '';
 
         if ($this->delimiter) {
-            $delimiter = (string) ($this->delimiter);
+            $delimiter = (string) $this->delimiter;
         } else {
             $delimiter = ',';
         }
@@ -40,7 +40,7 @@ class ActiveRecordExpressionsWrap extends ActiveRecordExpressions
         if ($this->end) {
             $str .= $this->end;
         } else {
-            $str .= (')');
+            $str .= ')';
         }
 
         return $str;
