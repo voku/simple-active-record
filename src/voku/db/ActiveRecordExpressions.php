@@ -18,6 +18,12 @@ use Arrayy\Arrayy;
  */
 class ActiveRecordExpressions extends Arrayy
 {
+    const SOURCE = 'source';
+
+    const OPERATOR = 'operator';
+
+    const TARGET = 'target';
+
     /**
      * @return string
      */

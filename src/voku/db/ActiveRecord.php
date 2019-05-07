@@ -370,13 +370,13 @@ abstract class ActiveRecord extends Arrayy
                 $args[0],
                 self::$operators[$nameTmp],
                 $args[1] ?? null,
-                (\is_string(\end($args)) && \strtolower(\end($args)) === 'or') ? 'OR' : 'AND'
+                \is_string(\end($args)) && \strtolower(\end($args)) === 'or' ? 'OR' : 'AND'
             );
         } elseif (\array_key_exists($nameTmp = \str_replace('by', '', $nameTmp), $this->sqlParts)) {
             $this->{$name} = new ActiveRecordExpressions(
                 [
-                    'operator' => $this->sqlParts[$nameTmp],
-                    'target'   => \implode(', ', $args),
+                    ActiveRecordExpressions::OPERATOR => $this->sqlParts[$nameTmp],
+                    ActiveRecordExpressions::TARGET   => \implode(', ', $args),
                 ]
             );
         } elseif (\is_callable([$this->db, $name])) {
@@ -625,8 +625,8 @@ abstract class ActiveRecord extends Arrayy
             self::SQL_INSERT,
             new ActiveRecordExpressions(
                 [
-                    'operator' => 'INSERT INTO ' . $this->table,
-                    'target'   => new ActiveRecordExpressionsWrap(['target' => \array_keys($this->dirty)]),
+                    ActiveRecordExpressions::OPERATOR => 'INSERT INTO ' . $this->table,
+                    ActiveRecordExpressions::TARGET   => new ActiveRecordExpressionsWrap([ActiveRecordExpressions::TARGET => \array_keys($this->dirty)]),
                 ]
             )
         );
@@ -635,8 +635,8 @@ abstract class ActiveRecord extends Arrayy
             self::SQL_VALUES,
             new ActiveRecordExpressions(
                 [
-                    'operator' => 'VALUES',
-                    'target'   => new ActiveRecordExpressionsWrap(['target' => $value]),
+                    ActiveRecordExpressions::OPERATOR => 'VALUES',
+                    ActiveRecordExpressions::TARGET   => new ActiveRecordExpressionsWrap([ActiveRecordExpressions::TARGET => $value]),
                 ]
             )
         );
@@ -1007,18 +1007,44 @@ abstract class ActiveRecord extends Arrayy
         string $name = self::SQL_WHERE
     ) {
         $value = $this->_filterParam($value);
-        $expression = new ActiveRecordExpressions(
-            [
-                'source'   => (\strtolower($name) === self::SQL_WHERE ? $this->table . '.' : '') . $field,
-                'operator' => $operator,
-                'target'   => \is_array($value)
-                    ? new ActiveRecordExpressionsWrap(
-                        \strtolower($operator) === 'between'
-                            ? ['target' => $value, 'start' => ' ', 'end' => ' ', 'delimiter' => ' AND ']
-                            : ['target' => $value]
-                    ) : $value,
-            ]
-        );
+        if (\is_array($value)) {
+            if (\strtolower($operator) === 'between') {
+                $expression = new ActiveRecordExpressions(
+                    [
+                        ActiveRecordExpressions::SOURCE   => (\strtolower($name) === self::SQL_WHERE ? $this->table . '.' : '') . $field,
+                        ActiveRecordExpressions::OPERATOR => $operator,
+                        ActiveRecordExpressions::TARGET   => new ActiveRecordExpressionsWrap(
+                            [
+                                ActiveRecordExpressions::TARGET        => $value,
+                                ActiveRecordExpressionsWrap::START     => ' ',
+                                ActiveRecordExpressionsWrap::END       => ' ',
+                                ActiveRecordExpressionsWrap::DELIMITER => ' AND ',
+                            ]
+                        ),
+                    ]
+                );
+            } else {
+                $expression = new ActiveRecordExpressions(
+                    [
+                        ActiveRecordExpressions::SOURCE   => (\strtolower($name) === self::SQL_WHERE ? $this->table . '.' : '') . $field,
+                        ActiveRecordExpressions::OPERATOR => $operator,
+                        ActiveRecordExpressions::TARGET   => new ActiveRecordExpressionsWrap(
+                            [
+                                ActiveRecordExpressions::TARGET => $value,
+                            ]
+                        ),
+                    ]
+                );
+            }
+        } else {
+            $expression = new ActiveRecordExpressions(
+                [
+                    ActiveRecordExpressions::SOURCE   => (\strtolower($name) === self::SQL_WHERE ? $this->table . '.' : '') . $field,
+                    ActiveRecordExpressions::OPERATOR => $operator,
+                    ActiveRecordExpressions::TARGET   => $value,
+                ]
+            );
+        }
 
         if ($this->wrap) {
             $this->_addExpression($expression, $operator_concat);
@@ -1061,13 +1087,13 @@ abstract class ActiveRecord extends Arrayy
             self::SQL_JOIN,
             new ActiveRecordExpressions(
                 [
-                    'source'   => $this->getSqlExpressionHelper(self::SQL_JOIN) ?: '',
-                    'operator' => $type . ' JOIN',
-                    'target'   => new ActiveRecordExpressions(
+                    ActiveRecordExpressions::SOURCE   => $this->getSqlExpressionHelper(self::SQL_JOIN) ?: '',
+                    ActiveRecordExpressions::OPERATOR => $type . ' JOIN',
+                    ActiveRecordExpressions::TARGET   => new ActiveRecordExpressions(
                         [
-                            'source'   => $table,
-                            'operator' => 'ON',
-                            'target'   => $on,
+                            ActiveRecordExpressions::SOURCE   => $table,
+                            ActiveRecordExpressions::OPERATOR => 'ON',
+                            ActiveRecordExpressions::TARGET   => $on,
                         ]
                     ),
                 ]
@@ -1148,8 +1174,9 @@ abstract class ActiveRecord extends Arrayy
      * Make wrap when build the SQL expressions of WHERE.
      *
      * @param string|null $op
-     *                        <p>If given, this param will build one "ActiveRecordExpressionsWrap" and include the stored
-     *                        expressions add into WHERE, otherwise it will stored the expressions into an array.</p>
+     *                        <p>If given, this param will build one "ActiveRecordExpressionsWrap" and include the
+     *                        stored expressions add into WHERE, otherwise it will stored the expressions into an
+     *                        array.</p>
      *
      * @return static
      */
@@ -1165,8 +1192,8 @@ abstract class ActiveRecord extends Arrayy
                 $this->_addCondition(
                     new ActiveRecordExpressionsWrap(
                         [
-                            'delimiter' => ' ',
-                            'target'    => $this->expressions,
+                            ActiveRecordExpressionsWrap::DELIMITER => ' ',
+                            ActiveRecordExpressions::TARGET        => $this->expressions,
                         ]
                     ),
                     $op && \strtolower($op) === 'or' ? 'OR' : 'AND'
@@ -1246,7 +1273,7 @@ abstract class ActiveRecord extends Arrayy
      * @param string $name
      *                     <p>The name of the relation (the array key from the definition).</p>
      *
-     *@throws ActiveRecordException
+     * @throws ActiveRecordException
      *                               <p>If the relation can't be found .</p>
      *
      * @return mixed
@@ -1373,8 +1400,8 @@ abstract class ActiveRecord extends Arrayy
         } else {
             $this->expressions[] = new ActiveRecordExpressions(
                 [
-                    'operator' => $operator,
-                    'target'   => $exp,
+                    ActiveRecordExpressions::OPERATOR => $operator,
+                    ActiveRecordExpressions::TARGET   => $exp,
                 ]
             );
         }
@@ -1399,16 +1426,16 @@ abstract class ActiveRecord extends Arrayy
         if ($this->{$name}) {
             $this->{$name}->target = new ActiveRecordExpressions(
                 [
-                    'source'   => $this->{$name}->target,
-                    'operator' => $operator,
-                    'target'   => $expression,
+                    ActiveRecordExpressions::SOURCE   => $this->{$name}->target,
+                    ActiveRecordExpressions::OPERATOR => $operator,
+                    ActiveRecordExpressions::TARGET   => $expression,
                 ]
             );
         } else {
             $this->{$name} = new ActiveRecordExpressions(
                 [
-                    'operator' => \strtoupper($name),
-                    'target'   => $expression,
+                    ActiveRecordExpressions::OPERATOR => \strtoupper($name),
+                    ActiveRecordExpressions::TARGET   => $expression,
                 ]
             );
         }
@@ -1519,7 +1546,7 @@ abstract class ActiveRecord extends Arrayy
         } elseif ($sql_string_part === self::SQL_DELETE) {
             $sql_string_part = \strtoupper($sql_string_part) . ' ';
         } else {
-            $sql_string_part = ($active_record->{$sql_string_part} !== null) ? $active_record->{$sql_string_part} . ' ' : '';
+            $sql_string_part = $active_record->{$sql_string_part} !== null ? $active_record->{$sql_string_part} . ' ' : '';
         }
     }
 }

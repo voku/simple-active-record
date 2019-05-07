@@ -13,6 +13,12 @@ namespace voku\db;
  */
 class ActiveRecordExpressionsWrap extends ActiveRecordExpressions
 {
+    const DELIMITER = 'delimiter';
+
+    const START = 'start';
+
+    const END = 'end';
+
     /**
      * @return string
      */
