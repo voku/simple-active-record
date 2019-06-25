@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.2.0 (2019-06-25)
+------------------
+- add "Collection" for collection of ActiveRecord results + type check
+- replace strings in Expressions with class constants
+
 1.1.0 (2019-04-21)
 ------------------
 - add "ActiveRecord" class const for SQL building 
