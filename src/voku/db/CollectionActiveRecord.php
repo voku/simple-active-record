@@ -11,7 +11,7 @@ final class CollectionActiveRecord extends \Arrayy\Collection\AbstractCollection
 {
     public function getType(): string
     {
-        return 'mixed';
+        return ActiveRecord::class;
     }
 
     /**
