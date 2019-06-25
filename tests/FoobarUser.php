@@ -41,7 +41,7 @@ class FoobarUser extends ActiveRecord
         );
 
         $this->addRelation(
-          'contact',
+            'contact',
             self::HAS_ONE,
             FoobarContact::class,
             'user_id',

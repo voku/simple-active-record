@@ -290,6 +290,9 @@ abstract class ActiveRecord extends Arrayy
         /** @noinspection UnusedFunctionResultInspection */
         $this->prepareHashids();
 
+        $this->reset();
+        $this->resetDirty();
+
         $this->init();
     }
 
@@ -513,9 +516,9 @@ abstract class ActiveRecord extends Arrayy
      *                        If not set, just find all records in database.
      *                        </p>
      *
-     * @return static[]
+     * @return \Generator|static[]
      */
-    public function fetchAll(array $ids = null): array
+    public function yieldAll(array $ids = null)
     {
         if ($ids) {
             $this->reset()->in($this->primaryKeyName, $ids);
@@ -535,7 +538,46 @@ abstract class ActiveRecord extends Arrayy
                 ]
             ),
             $this->params,
-            $this->reset()
+            $this->reset(),
+            false,
+            true
+        );
+    }
+
+    /**
+     * Function to find all records in database.
+     *
+     * @param array|null $ids
+     *                        <p>
+     *                        If call this function using this param, we will find the record by using this id's.
+     *                        If not set, just find all records in database.
+     *                        </p>
+     *
+     * @return static[]|CollectionActiveRecord
+     */
+    public function fetchAll(array $ids = null)
+    {
+        if ($ids) {
+            $this->reset()->in($this->primaryKeyName, $ids);
+        }
+
+        return $this->query(
+            $this->_buildSql(
+                [
+                    self::SQL_SELECT,
+                    self::SQL_FROM,
+                    self::SQL_JOIN,
+                    self::SQL_WHERE,
+                    self::SQL_GROUP,
+                    self::SQL_HAVING,
+                    self::SQL_ORDER,
+                    self::SQL_LIMIT,
+                ]
+            ),
+            $this->params,
+            $this->reset(),
+            false,
+            true
         );
     }
 
@@ -671,12 +713,18 @@ abstract class ActiveRecord extends Arrayy
     /**
      * Function to delete current record in database.
      *
+     * @param string|null $keyOrNull
+     *
      * @return bool
      */
-    public function delete(): bool
+    public function delete($keyOrNull = null): bool
     {
+        if ($keyOrNull === null) {
+            $keyOrNull = $this->{$this->primaryKeyName};
+        }
+
         $return = $this->execute(
-            $this->eq($this->primaryKeyName, $this->{$this->primaryKeyName})->_buildSql(
+            $this->eq($this->primaryKeyName, $keyOrNull)->_buildSql(
                 [
                     self::SQL_DELETE,
                     self::SQL_FROM,
@@ -805,33 +853,34 @@ abstract class ActiveRecord extends Arrayy
     /**
      * @param array $ids
      *
-     * @return static[]
+     * @return static[]|CollectionActiveRecord
      */
-    public function fetchByIds(array $ids): array
+    public function fetchByIds(array $ids)
     {
         if (empty($ids)) {
-            return [];
+            return new CollectionActiveRecord();
         }
 
         $list = $this->fetchAll($ids);
-        if (\is_array($list) && \count($list) > 0) {
+
+        if ($list instanceof CollectionActiveRecord) {
             return $list;
         }
 
-        return [];
+        return new CollectionActiveRecord();
     }
 
     /**
      * @param array $ids
      *
-     * @return static[]
+     * @return static[]|CollectionActiveRecord
      */
-    public function fetchByIdsPrimaryKeyAsArrayIndex(array $ids): array
+    public function fetchByIdsPrimaryKeyAsArrayIndex(array $ids)
     {
         $result = $this->fetchAll($ids);
 
-        $resultNew = [];
-        foreach ($result as $item) {
+        $resultNew = new CollectionActiveRecord();
+        foreach ($result->getGenerator() as $item) {
             $resultNew[$item->getPrimaryKey()] = $item;
         }
 
@@ -854,47 +903,25 @@ abstract class ActiveRecord extends Arrayy
     /**
      * @param string $query
      *
-     * @return static[]
+     * @return static[]|CollectionActiveRecord
      */
-    public function fetchManyByQuery(string $query): array
+    public function fetchManyByQuery(string $query)
     {
-        $list = $this->fetchByQuery($query);
-
-        if (!$list || empty($list)) {
-            return [];
-        }
-
-        return $list;
+        return $this->fetchByQuery($query);
     }
 
     /**
      * @param string $query
      *
-     * @return static|static[]
+     * @return static|static[]|CollectionActiveRecord
      */
     public function fetchByQuery(string $query)
     {
-        $list = $this->query(
+        return $this->query(
             $query,
             $this->params,
             $this->reset()
         );
-
-        if ($list === false) {
-            return [];
-        }
-
-        if (\is_array($list)) {
-            if (\count($list) === 0) {
-                return [];
-            }
-
-            return $list;
-        }
-
-        $this->array = $list->getArray();
-
-        return $this;
     }
 
     /**
@@ -906,11 +933,11 @@ abstract class ActiveRecord extends Arrayy
     {
         $list = $this->fetchByQuery($query);
 
-        if (!$list || empty($list)) {
+        if ($list->count() === 0) {
             return null;
         }
 
-        if (\is_array($list) && \count($list) > 0) {
+        if (isset($list[0])) {
             $this->array = $list[0]->getArray();
         } elseif ($list instanceof Arrayy) {
             $this->array = $list->getArray();
@@ -1142,7 +1169,8 @@ abstract class ActiveRecord extends Arrayy
             return true;
         }
 
-        foreach ($this->dirty as $field => $value) {
+        /** @noinspection AlterInForeachInspection */
+        foreach ($this->dirty as $field => &$value) {
             $this->addCondition((string) $field, '=', $value, ',', self::SQL_SET);
         }
 
@@ -1462,14 +1490,19 @@ abstract class ActiveRecord extends Arrayy
      *                          If set to true, we will find record and fetch in current object, otherwise
      *                          will find all records.
      *                          </p>
+     * @param bool      $yield
+     *                          <p>
+     *                          If set to true, we will return a generator via yield.
+     *                          </p>
      *
-     * @return false|static|static[]
+     * @return false|static|static[]|CollectionActiveRecord|\Generator
      */
     private function query(
         string $sql,
         array $param = [],
         self $obj = null,
-        bool $single = false
+        bool $single = false,
+        bool $yield = false
     ) {
         $result = $this->execute($sql, $param);
 
@@ -1486,14 +1519,30 @@ abstract class ActiveRecord extends Arrayy
         $this->setNewDataAreDirty(false);
 
         if ($single) {
-            $return = $result->fetchObject($called_class, null, true);
+            if ($yield) {
+                $return = $result->fetchYield($called_class, null, true);
+            } else {
+                $return = $result->fetchObject($called_class, null, true);
+            }
         } else {
-            $return = $result->fetchAllObject($called_class, null);
+            if ($yield) {
+                $return = $result->fetchAllYield($called_class, null);
+            } else {
+                $return = $result->fetchAllObject($called_class, null);
+            }
+        }
+
+        $tmpCollection = null;
+        if (!$single) {
+            $tmpCollection = new CollectionActiveRecord();
+            foreach ($return as $key => $value) {
+                $tmpCollection[$key] = $value;
+            }
         }
 
         $this->setNewDataAreDirty(true);
 
-        return $return;
+        return $tmpCollection ?? $return;
     }
 
     /**

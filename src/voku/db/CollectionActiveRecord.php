@@ -1,0 +1,32 @@
+<?php
+
+declare(strict_types=1);
+
+namespace voku\db;
+
+/**
+ * @internal
+ */
+final class CollectionActiveRecord extends \Arrayy\Collection\AbstractCollection
+{
+    public function getType(): string
+    {
+        return 'mixed';
+    }
+
+    /**
+     * @return ActiveRecord[]
+     */
+    public function getAll(): array
+    {
+        return parent::getAll();
+    }
+
+    /**
+     * @return ActiveRecord[]|\Generator
+     */
+    public function getGenerator(): \Generator
+    {
+        return parent::getGenerator();
+    }
+}

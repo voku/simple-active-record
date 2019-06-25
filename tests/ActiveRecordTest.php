@@ -261,6 +261,9 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
             }
         }
 
+        $names = $users->getColumn('name')->getArray();
+        static::assertSame(['demo1', 'demo'], $names);
+
         // name etc. will stored in user data array.
         static::assertTrue($found);
         static::assertSame($contact->user_id, $userForTesting->id);
@@ -284,6 +287,15 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
         static::assertSame($contact->user_id, $user->id);
         static::assertSame($contact->user_id, $user->getPrimaryKey());
         static::assertSame('demo1', $user->name);
+
+        // ---
+
+        $user = new FoobarUser();
+        $sql = 'SELECT * FROM user WHERE id = ' . -1;
+        $newUser = $user->fetchOneByQuery($sql);
+        static::assertInstanceOf(FoobarUser::class, $user);
+        static::assertNull($newUser);
+
     }
 
     /**
@@ -299,7 +311,7 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
 
         $found = false;
         $userForTesting = null;
-        foreach ($users as $userTmp) {
+        foreach ($users->getGenerator() as $userTmp) {
             if ($userTmp->getPrimaryKey() === $contact->user_id) {
                 $found = true;
                 $userForTesting = clone $userTmp;
