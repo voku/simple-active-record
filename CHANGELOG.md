@@ -1,6 +1,10 @@
 Changelog
 =========
 
+1.3.0 (2019-08-15)
+------------------
+- add "yield" support for all non-single fetch methods
+
 1.2.0 (2019-06-25)
 ------------------
 - add "Collection" for collection of ActiveRecord results + type check
