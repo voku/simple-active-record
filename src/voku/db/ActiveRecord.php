@@ -489,10 +489,10 @@ abstract class ActiveRecord extends Arrayy
      * @param array  $param
      *                      <p>The param will be bind to the sql statement.</p>
      *
-     * @return bool|int|Result
+     * @return bool|int|string|Result
      *                         <p>
      *                         "Result" by "<b>SELECT</b>"-queries<br />
-     *                         "int" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
+     *                         "int|string" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
      *                         "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
      *                         "true" by e.g. "DROP"-queries<br />
      *                         "false" on error
@@ -1189,7 +1189,7 @@ abstract class ActiveRecord extends Arrayy
 
         /** @noinspection AlterInForeachInspection */
         foreach ($this->dirty as $field => &$value) {
-            $this->addCondition($field, '=', $value, ',', self::SQL_SET);
+            $this->addCondition((string)$field, '=', $value, ',', self::SQL_SET);
         }
 
         $result = $this->execute(

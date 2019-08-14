@@ -6,7 +6,9 @@ parameters:
     autoload_files:
         - %currentWorkingDirectory%/vendor/autoload.php
     ignoreErrors:
+        - '/private method count\(\) of parent class Arrayy\\Arrayy/'
+        - '/Arrayy\\Arrayy::createFromGeneratorImmutable\(\) expects Generator/'
+        - '/only iterables are supported/'
         - '/iterable<static/'
         - '/Parameter #1 \$function of function call_user_func_array expects callable\(\)/'
-        - '/but returns (\()*array<static\(voku\\db\\ActiveRecord/'
         - '/Cannot call method implode\(\) on string\|voku\\db\\ActiveRecordExpressions/'
