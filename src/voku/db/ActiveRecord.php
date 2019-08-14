@@ -375,7 +375,7 @@ abstract class ActiveRecord extends Arrayy
                 $args[1] ?? null,
                 \is_string(\end($args)) && \strtolower(\end($args)) === 'or' ? 'OR' : 'AND'
             );
-        } elseif (\array_key_exists($nameTmp = \str_replace('by', '', $nameTmp), $this->sqlParts)) {
+        } elseif (\array_key_exists($nameTmp, $this->sqlParts)) {
             $this->{$name} = new ActiveRecordExpressions(
                 [
                     ActiveRecordExpressions::OPERATOR => $this->sqlParts[$nameTmp],
@@ -516,7 +516,7 @@ abstract class ActiveRecord extends Arrayy
      *                        If not set, just find all records in database.
      *                        </p>
      *
-     * @return \Generator|static[]
+     * @return CollectionActiveRecord|static[]|\Generator
      */
     public function yieldAll(array $ids = null)
     {
@@ -553,7 +553,7 @@ abstract class ActiveRecord extends Arrayy
      *                        If not set, just find all records in database.
      *                        </p>
      *
-     * @return static[]|CollectionActiveRecord
+     * @return static[]|CollectionActiveRecord|\Generator
      */
     public function fetchAll(array $ids = null)
     {
@@ -663,12 +663,17 @@ abstract class ActiveRecord extends Arrayy
 
         $value = $this->_filterParam($this->dirty);
 
+        $fields = [];
+        foreach ($this->dirty as $fieldTmp => $valueTmp) {
+            $fields['`' . $fieldTmp . '`'] = $valueTmp;
+        }
+
         $this->setSqlExpressionHelper(
             self::SQL_INSERT,
             new ActiveRecordExpressions(
                 [
                     ActiveRecordExpressions::OPERATOR => 'INSERT INTO ' . $this->table,
-                    ActiveRecordExpressions::TARGET   => new ActiveRecordExpressionsWrap([ActiveRecordExpressions::TARGET => \array_keys($this->dirty)]),
+                    ActiveRecordExpressions::TARGET   => new ActiveRecordExpressionsWrap([ActiveRecordExpressions::TARGET => \array_keys($fields)]),
                 ]
             )
         );
@@ -873,16 +878,19 @@ abstract class ActiveRecord extends Arrayy
     /**
      * @param array $ids
      *
-     * @return static[]|CollectionActiveRecord
+     * @return static[]|CollectionActiveRecord|\Generator
      */
     public function fetchByIdsPrimaryKeyAsArrayIndex(array $ids)
     {
         $result = $this->fetchAll($ids);
 
-        $resultNew = new CollectionActiveRecord();
-        foreach ($result->getGenerator() as $item) {
-            $resultNew[$item->getPrimaryKey()] = $item;
-        }
+        $resultNew = CollectionActiveRecord::createFromGeneratorFunction(
+          function() use ($result) {
+              foreach ($result->getGenerator() as $item) {
+                  yield $item->getPrimaryKey() => $item;
+              }
+          }
+        );
 
         return $resultNew;
     }
@@ -903,24 +911,32 @@ abstract class ActiveRecord extends Arrayy
     /**
      * @param string $query
      *
-     * @return static[]|CollectionActiveRecord
+     * @return static[]|CollectionActiveRecord|\Generator
      */
     public function fetchManyByQuery(string $query)
     {
-        return $this->fetchByQuery($query);
+        return $this->query(
+            $query,
+            $this->params,
+            $this->reset(),
+            false,
+            true
+        );
     }
 
     /**
      * @param string $query
      *
-     * @return static|static[]|CollectionActiveRecord
+     * @return static|static[]|CollectionActiveRecord|\Generator
      */
     public function fetchByQuery(string $query)
     {
         return $this->query(
             $query,
             $this->params,
-            $this->reset()
+            $this->reset(),
+            false,
+            true
         );
     }
 
@@ -1033,7 +1049,9 @@ abstract class ActiveRecord extends Arrayy
         string $operator_concat = 'AND',
         string $name = self::SQL_WHERE
     ) {
+        $field = '`' . $field . '`';
         $value = $this->_filterParam($value);
+
         if (\is_array($value)) {
             if (\strtolower($operator) === 'between') {
                 $expression = new ActiveRecordExpressions(
@@ -1171,7 +1189,7 @@ abstract class ActiveRecord extends Arrayy
 
         /** @noinspection AlterInForeachInspection */
         foreach ($this->dirty as $field => &$value) {
-            $this->addCondition((string) $field, '=', $value, ',', self::SQL_SET);
+            $this->addCondition($field, '=', $value, ',', self::SQL_SET);
         }
 
         $result = $this->execute(
@@ -1525,6 +1543,7 @@ abstract class ActiveRecord extends Arrayy
                 $return = $result->fetchObject($called_class, null, true);
             }
         } else {
+            /** @noinspection NestedPositiveIfStatementsInspection */
             if ($yield) {
                 $return = $result->fetchAllYield($called_class, null);
             } else {
@@ -1534,9 +1553,13 @@ abstract class ActiveRecord extends Arrayy
 
         $tmpCollection = null;
         if (!$single) {
-            $tmpCollection = new CollectionActiveRecord();
-            foreach ($return as $key => $value) {
-                $tmpCollection[$key] = $value;
+            if ($yield) {
+                $tmpCollection = CollectionActiveRecord::createFromGeneratorImmutable($return);
+            } else {
+                $tmpCollection = new CollectionActiveRecord();
+                foreach ($return as $key => $value) {
+                    $tmpCollection[$key] = $value;
+                }
             }
         }
 
@@ -1582,7 +1605,11 @@ abstract class ActiveRecord extends Arrayy
             $active_record->{$sql_string_part} === null
         ) {
             $sql_string_part = \strtoupper($sql_string_part) . ' ' . $active_record->table . '.*';
-        } elseif (
+
+            return;
+        }
+
+        if (
             (
                 $sql_string_part === self::SQL_UPDATE
                 ||
@@ -1592,10 +1619,16 @@ abstract class ActiveRecord extends Arrayy
             $active_record->{$sql_string_part} === null
         ) {
             $sql_string_part = \strtoupper($sql_string_part) . ' ' . $active_record->table;
-        } elseif ($sql_string_part === self::SQL_DELETE) {
-            $sql_string_part = \strtoupper($sql_string_part) . ' ';
-        } else {
-            $sql_string_part = $active_record->{$sql_string_part} !== null ? $active_record->{$sql_string_part} . ' ' : '';
+
+            return;
         }
+
+        if ($sql_string_part === self::SQL_DELETE) {
+            $sql_string_part = \strtoupper($sql_string_part) . ' ';
+
+            return;
+        }
+
+        $sql_string_part = $active_record->{$sql_string_part} !== null ? $active_record->{$sql_string_part} . ' ' : '';
     }
 }

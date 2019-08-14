@@ -440,6 +440,27 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
         static::assertSame($contact->user_id, $userForTesting->id);
         static::assertSame($contact->user_id, $userForTesting->getPrimaryKey());
         static::assertSame('demo1', $userForTesting->name);
+
+        // again, so we can test "Cannot traverse an already closed generator"
+
+        $found = false;
+        $userForTesting = null;
+        foreach ($users as $userId => $userTmp) {
+            if (
+                $userId === $contact->user_id
+                &&
+                $userTmp->getPrimaryKey() === $contact->user_id
+            ) {
+                $found = true;
+                $userForTesting = clone $userTmp;
+            }
+        }
+
+        // name etc. will stored in user data array.
+        static::assertTrue($found);
+        static::assertSame($contact->user_id, $userForTesting->id);
+        static::assertSame($contact->user_id, $userForTesting->getPrimaryKey());
+        static::assertSame('demo1', $userForTesting->name);
     }
 
     /**
