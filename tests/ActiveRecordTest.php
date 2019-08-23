@@ -295,7 +295,40 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
         $newUser = $user->fetchOneByQuery($sql);
         static::assertInstanceOf(FoobarUser::class, $user);
         static::assertNull($newUser);
+    }
 
+    /**
+     * @depends testInsertContact
+     *
+     * @param FoobarContact $contact
+     */
+    public function testFetchOneByQueryOrThrowException($contact)
+    {
+        $user = new FoobarUser();
+        $sql = 'SELECT * FROM user WHERE id = ' . (int) $contact->user_id;
+        $user->fetchOneByQueryOrThrowException($sql);
+        static::assertInstanceOf(FoobarUser::class, $user);
+
+        // name etc. will stored in user data array.
+        static::assertSame($contact->user_id, $user->id);
+        static::assertSame($contact->user_id, $user->getPrimaryKey());
+        static::assertSame('demo1', $user->name);
+    }
+
+    /**
+     * @depends testInsertContact
+     *
+     * @param FoobarContact $contact
+     */
+    public function testFetchOneByQueryOrThrowExceptionFail($contact)
+    {
+        $this->expectException(\voku\db\exceptions\FetchOneButFoundNone::class);
+
+        $user = new FoobarUser();
+        $sql = 'SELECT * FROM user WHERE id = ' . -1;
+        $newUser = $user->fetchOneByQueryOrThrowException($sql);
+        static::assertInstanceOf(FoobarUser::class, $user);
+        static::assertNull($newUser);
     }
 
     /**

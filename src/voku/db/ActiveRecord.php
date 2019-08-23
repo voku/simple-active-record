@@ -10,6 +10,8 @@ use Hashids\Hashids;
 use Hashids\HashidsInterface;
 use voku\db\exceptions\ActiveRecordException;
 use voku\db\exceptions\FetchingException;
+use voku\db\exceptions\FetchOneButFoundMultiple;
+use voku\db\exceptions\FetchOneButFoundNone;
 
 /**
  * A simple implement of active record via Arrayy.
@@ -293,6 +295,10 @@ abstract class ActiveRecord extends Arrayy
         $this->reset();
         $this->resetDirty();
 
+        if ($this->table === null) {
+            $this->table = \strtolower(static::class);
+        }
+
         $this->init();
     }
 
@@ -489,14 +495,14 @@ abstract class ActiveRecord extends Arrayy
      * @param array  $param
      *                      <p>The param will be bind to the sql statement.</p>
      *
-     * @return bool|int|string|Result
-     *                         <p>
-     *                         "Result" by "<b>SELECT</b>"-queries<br />
-     *                         "int|string" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
-     *                         "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
-     *                         "true" by e.g. "DROP"-queries<br />
-     *                         "false" on error
-     *                         </p>
+     * @return bool|int|Result|string
+     *                                <p>
+     *                                "Result" by "<b>SELECT</b>"-queries<br />
+     *                                "int|string" (insert_id) by "<b>INSERT / REPLACE</b>"-queries<br />
+     *                                "int" (affected_rows) by "<b>UPDATE / DELETE</b>"-queries<br />
+     *                                "true" by e.g. "DROP"-queries<br />
+     *                                "false" on error
+     *                                </p>
      */
     public function execute(string $sql, array $param = [])
     {
@@ -516,7 +522,7 @@ abstract class ActiveRecord extends Arrayy
      *                        If not set, just find all records in database.
      *                        </p>
      *
-     * @return CollectionActiveRecord|static[]|\Generator
+     * @return CollectionActiveRecord|\Generator|static[]
      */
     public function yieldAll(array $ids = null)
     {
@@ -553,7 +559,7 @@ abstract class ActiveRecord extends Arrayy
      *                        If not set, just find all records in database.
      *                        </p>
      *
-     * @return static[]|CollectionActiveRecord|\Generator
+     * @return CollectionActiveRecord|\Generator|static[]
      */
     public function fetchAll(array $ids = null)
     {
@@ -858,7 +864,7 @@ abstract class ActiveRecord extends Arrayy
     /**
      * @param array $ids
      *
-     * @return static[]|CollectionActiveRecord
+     * @return CollectionActiveRecord|static[]
      */
     public function fetchByIds(array $ids)
     {
@@ -878,18 +884,18 @@ abstract class ActiveRecord extends Arrayy
     /**
      * @param array $ids
      *
-     * @return static[]|CollectionActiveRecord|\Generator
+     * @return CollectionActiveRecord|\Generator|static[]
      */
     public function fetchByIdsPrimaryKeyAsArrayIndex(array $ids)
     {
         $result = $this->fetchAll($ids);
 
         $resultNew = CollectionActiveRecord::createFromGeneratorFunction(
-          function() use ($result) {
-              foreach ($result->getGenerator() as $item) {
-                  yield $item->getPrimaryKey() => $item;
-              }
-          }
+            static function () use ($result) {
+                foreach ($result->getGenerator() as $item) {
+                    yield $item->getPrimaryKey() => $item;
+                }
+            }
         );
 
         return $resultNew;
@@ -911,7 +917,7 @@ abstract class ActiveRecord extends Arrayy
     /**
      * @param string $query
      *
-     * @return static[]|CollectionActiveRecord|\Generator
+     * @return CollectionActiveRecord|\Generator|static[]
      */
     public function fetchManyByQuery(string $query)
     {
@@ -927,7 +933,7 @@ abstract class ActiveRecord extends Arrayy
     /**
      * @param string $query
      *
-     * @return static|static[]|CollectionActiveRecord|\Generator
+     * @return CollectionActiveRecord|\Generator|static|static[]
      */
     public function fetchByQuery(string $query)
     {
@@ -949,8 +955,14 @@ abstract class ActiveRecord extends Arrayy
     {
         $list = $this->fetchByQuery($query);
 
-        if ($list->count() === 0) {
+        $count = $list->count();
+
+        if ($count === 0) {
             return null;
+        }
+
+        if ($count > 1) {
+            throw new FetchOneButFoundMultiple('Found this results: ' . \print_r($list, true) . ' | Query: ' . $query);
         }
 
         if (isset($list[0])) {
@@ -960,6 +972,22 @@ abstract class ActiveRecord extends Arrayy
         }
 
         return $this;
+    }
+
+    /**
+     * @param string $query
+     *
+     * @return static
+     */
+    public function fetchOneByQueryOrThrowException(string $query)
+    {
+        $result = $this->fetchOneByQuery($query);
+
+        if ($result === null) {
+            throw new FetchOneButFoundNone('Query: ' . $query);
+        }
+
+        return $result;
     }
 
     /**
@@ -1189,7 +1217,7 @@ abstract class ActiveRecord extends Arrayy
 
         /** @noinspection AlterInForeachInspection */
         foreach ($this->dirty as $field => &$value) {
-            $this->addCondition((string)$field, '=', $value, ',', self::SQL_SET);
+            $this->addCondition((string) $field, '=', $value, ',', self::SQL_SET);
         }
 
         $result = $this->execute(
@@ -1513,7 +1541,7 @@ abstract class ActiveRecord extends Arrayy
      *                          If set to true, we will return a generator via yield.
      *                          </p>
      *
-     * @return false|static|static[]|CollectionActiveRecord|\Generator
+     * @return CollectionActiveRecord|false|\Generator|static|static[]
      */
     private function query(
         string $sql,

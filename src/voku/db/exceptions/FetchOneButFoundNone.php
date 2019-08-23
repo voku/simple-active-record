@@ -4,6 +4,6 @@ declare(strict_types=1);
 
 namespace voku\db\exceptions;
 
-class ActiveRecordException extends \Exception
+class FetchOneButFoundNone extends ActiveRecordException
 {
 }
