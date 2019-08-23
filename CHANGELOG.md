@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.4.0 (2019-08-24)
+------------------
+- add "fetchOneByQueryOrThrowException()"
+- check if "fetchOneByQuery()" fetched only one entry, otherwise throw a exception
+
 1.3.0 (2019-08-15)
 ------------------
 - add "yield" support for all non-single fetch methods
