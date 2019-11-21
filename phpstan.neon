@@ -7,7 +7,7 @@ parameters:
         - %currentWorkingDirectory%/vendor/autoload.php
     ignoreErrors:
         - '/private method count\(\) of parent class Arrayy\\Arrayy/'
-        - '/Arrayy\\Arrayy::createFromGeneratorImmutable\(\) expects Generator/'
+        - '/Arrayy\\Arrayy::createFromGeneratorFunction\(\) expects callable/'
         - '/only iterables are supported/'
         - '/iterable<static/'
         - '/Parameter #1 \$function of function call_user_func_array expects callable\(\)/'
