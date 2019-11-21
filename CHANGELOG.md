@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.5.0 (2019-11-21)
+------------------
+- update vendor libs
+- CollectionActiveRecord::createFromGeneratorFunction()
+
 1.4.0 (2019-08-24)
 ------------------
 - add "fetchOneByQueryOrThrowException()"
