@@ -27,7 +27,16 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
     {
         parent::setUp();
 
-        $this->db = DB::getInstance('localhost', 'root', '', 'mysql_test', 3306, 'utf8', false, true);
+        $this->db = DB::getInstance(
+            'localhost',
+            'root',
+            '',
+            'mysql_test',
+            3306,
+            'utf8',
+            false,
+            true
+        );
     }
 
     public function testInit()
@@ -163,9 +172,9 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
      *
      * @param FoobarContact $contact
      *
-     * @return mixed
+     * @return FoobarContact
      */
-    public function testEditContact($contact)
+    public function testEditContact($contact): FoobarContact
     {
         $contact->address = 'test1';
         $contact->email = 'test1@demo.com';
@@ -205,7 +214,8 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
         static::assertSame($contact->user_with_backref->contact, $contact);
         $user = $contact->user;
         static::assertNotSame($user->contacts[0]->user, $user);
-        static::assertSame($user->contacts_with_backref[0]->user, $user);
+        /** @noinspection PhpNonStrictObjectEqualityInspection */
+        static::assertEquals($user->contacts_with_backref[0]->user, $user);
 
         return $contact;
     }
@@ -234,6 +244,7 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
     public function testFetch($contact)
     {
         $user = new FoobarUser();
+        /** @noinspection UnusedFunctionResultInspection */
         $user->fetch($contact->user_id);
         static::assertInstanceOf(FoobarUser::class, $user);
 
@@ -254,6 +265,15 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
 
         $found = false;
         $userForTesting = null;
+
+        foreach ($users as $userTmp) {
+            if ($userTmp->getPrimaryKey() === $contact->user_id) {
+                $found = true;
+                $userForTesting = clone $userTmp;
+            }
+        }
+
+        // repeat the loop (test the generator re-usage)
         foreach ($users as $userTmp) {
             if ($userTmp->getPrimaryKey() === $contact->user_id) {
                 $found = true;
@@ -280,6 +300,7 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
     {
         $user = new FoobarUser();
         $sql = 'SELECT * FROM user WHERE id = ' . (int) $contact->user_id;
+        /** @noinspection UnusedFunctionResultInspection */
         $user->fetchOneByQuery($sql);
         static::assertInstanceOf(FoobarUser::class, $user);
 
@@ -306,6 +327,7 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
     {
         $user = new FoobarUser();
         $sql = 'SELECT * FROM user WHERE id = ' . (int) $contact->user_id;
+        /** @noinspection UnusedFunctionResultInspection */
         $user->fetchOneByQueryOrThrowException($sql);
         static::assertInstanceOf(FoobarUser::class, $user);
 

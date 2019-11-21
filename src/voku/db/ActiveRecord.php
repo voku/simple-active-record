@@ -1566,14 +1566,18 @@ abstract class ActiveRecord extends Arrayy
 
         if ($single) {
             if ($yield) {
-                $return = $result->fetchYield($called_class, null, true);
+                $return = static function () use ($result, $called_class) {
+                    return $result->fetchYield($called_class, null, true);
+                };
             } else {
                 $return = $result->fetchObject($called_class, null, true);
             }
         } else {
             /** @noinspection NestedPositiveIfStatementsInspection */
             if ($yield) {
-                $return = $result->fetchAllYield($called_class, null);
+                $return = static function () use ($result, $called_class) {
+                    return $result->fetchAllYield($called_class, null);
+                };
             } else {
                 $return = $result->fetchAllObject($called_class, null);
             }
@@ -1582,7 +1586,9 @@ abstract class ActiveRecord extends Arrayy
         $tmpCollection = null;
         if (!$single) {
             if ($yield) {
-                $tmpCollection = CollectionActiveRecord::createFromGeneratorImmutable($return);
+                $tmpCollection = CollectionActiveRecord::createFromGeneratorFunction(
+                    $return
+                );
             } else {
                 $tmpCollection = new CollectionActiveRecord();
                 foreach ($return as $key => $value) {

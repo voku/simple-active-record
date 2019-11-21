@@ -27,6 +27,6 @@ final class CollectionActiveRecord extends \Arrayy\Collection\AbstractCollection
      */
     public function getGenerator(): \Generator
     {
-        return parent::getGenerator();
+        yield from parent::getGenerator();
     }
 }
