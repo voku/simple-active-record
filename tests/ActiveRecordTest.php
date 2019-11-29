@@ -45,8 +45,8 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
 
         $result[] = $this->db->query(
             'CREATE TABLE IF NOT EXISTS user (
-                id INTEGER NOT NULL AUTO_INCREMENT, 
-                name TEXT, 
+                id INTEGER NOT NULL AUTO_INCREMENT,
+                name TEXT,
                 password TEXT,
                 PRIMARY KEY (id)
             );'
@@ -54,8 +54,8 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
 
         $result[] = $this->db->query(
             'CREATE TABLE IF NOT EXISTS contact (
-                id INTEGER NOT NULL AUTO_INCREMENT, 
-                user_id INTEGER, 
+                id INTEGER NOT NULL AUTO_INCREMENT,
+                user_id INTEGER,
                 email TEXT,
                 address TEXT,
                 PRIMARY KEY (id)
@@ -118,8 +118,8 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
      */
     public function testInsertUserTypeFail()
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('expected password to be of type {string}, instead got value `0` with type {integer}');
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Invalid type: expected "password" to be of type {string}, instead got value "0" (0) with type {integer}.');
 
         $user = FoobarUser::fetchEmpty();
         $user->name = 'demo';
