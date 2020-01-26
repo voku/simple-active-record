@@ -15,33 +15,6 @@ use voku\db\exceptions\FetchOneButFoundNone;
 
 /**
  * A simple implement of active record via Arrayy.
- *
- * @method $this select(string $dbProperty)
- * @method $this eq(string $dbProperty, string | int | null $value = null)
- * @method $this from(string $table)
- * @method $this where(string $where)
- * @method $this having(string $having)
- * @method $this limit(int $start, int | null $end = null)
- * @method $this equal(string $dbProperty, string $value)
- * @method $this notEqual(string $dbProperty, string $value)
- * @method $this ne(string $dbProperty, string $value)
- * @method $this greaterThan(string $dbProperty, int $value)
- * @method $this gt(string $dbProperty, int $value)
- * @method $this lessThan(string $dbProperty, int $value)
- * @method $this lt(string $dbProperty, int $value)
- * @method $this greaterThanOrEqual(string $dbProperty, int $value)
- * @method $this ge(string $dbProperty, int $value)
- * @method $this gte(string $dbProperty, int $value)
- * @method $this lessThanOrEqual(string $dbProperty, int $value)
- * @method $this le(string $dbProperty, int $value)
- * @method $this lte(string $dbProperty, int $value)
- * @method $this between(string $dbProperty, array $value)
- * @method $this like(string $dbProperty, string $value)
- * @method $this in(string $dbProperty, array $value)
- * @method $this notIn(string $dbProperty, array $value)
- * @method $this isNull(string $dbProperty)
- * @method $this isNotNull(string $dbProperty)
- * @method $this notNull(string $dbProperty)
  */
 abstract class ActiveRecord extends Arrayy
 {
@@ -385,7 +358,7 @@ abstract class ActiveRecord extends Arrayy
             $this->{$name} = new ActiveRecordExpressions(
                 [
                     ActiveRecordExpressions::OPERATOR => $this->sqlParts[$nameTmp],
-                    ActiveRecordExpressions::TARGET   => \implode(', ', $args),
+                    ActiveRecordExpressions::TARGET   => \rtrim(\implode(',', $args), ','),
                 ]
             );
         } elseif (\is_callable([$this->db, $name])) {
@@ -477,7 +450,7 @@ abstract class ActiveRecord extends Arrayy
     /**
      * Function to reset the $params and $sqlExpressions.
      *
-     * @return static
+     * @return $this
      */
     public function reset(): self
     {
@@ -588,24 +561,6 @@ abstract class ActiveRecord extends Arrayy
     }
 
     /**
-     * Get a value from an array (optional using dot-notation).
-     *
-     * @param string $key
-     *                         <p>The key to look for.</p>
-     * @param mixed  $fallback
-     *                         <p>Value to fallback to.</p>
-     * @param array  $array
-     *                         <p>The array to get from, if it's set to "null" we use the current array from the
-     *                         class.</p>
-     *
-     * @return mixed
-     */
-    public function get($key, $fallback = null, array $array = null)
-    {
-        return parent::get($key, $fallback, $array);
-    }
-
-    /**
      * Helper function to copy an existing active record (and insert it into the database).
      *
      * @param bool $insert
@@ -631,7 +586,7 @@ abstract class ActiveRecord extends Arrayy
      * @param mixed $primaryKey
      * @param bool  $dirty
      *
-     * @return static
+     * @return $this
      */
     public function setPrimaryKey($primaryKey, bool $dirty = true): self
     {
@@ -712,7 +667,7 @@ abstract class ActiveRecord extends Arrayy
     /**
      * Reset the dirty data.
      *
-     * @return static
+     * @return $this
      */
     public function resetDirty(): self
     {
@@ -885,6 +840,8 @@ abstract class ActiveRecord extends Arrayy
      * @param array $ids
      *
      * @return CollectionActiveRecord|\Generator|static[]
+     *
+     * @noinspection PhpInconsistentReturnPointsInspection
      */
     public function fetchByIdsPrimaryKeyAsArrayIndex(array $ids)
     {
@@ -979,7 +936,7 @@ abstract class ActiveRecord extends Arrayy
      *
      * @return static
      */
-    public function fetchOneByQueryOrThrowException(string $query)
+    public function fetchOneByQueryOrThrowException(string $query): self
     {
         $result = $this->fetchOneByQuery($query);
 
@@ -1017,7 +974,7 @@ abstract class ActiveRecord extends Arrayy
     /**
      * @param string $primaryKeyName
      *
-     * @return static
+     * @return $this
      */
     public function setPrimaryKeyName(string $primaryKeyName): self
     {
@@ -1047,7 +1004,7 @@ abstract class ActiveRecord extends Arrayy
      *
      * @param mixed ...$args
      *
-     * @return static
+     * @return $this
      */
     public function groupBy(...$args): self
     {
@@ -1152,7 +1109,7 @@ abstract class ActiveRecord extends Arrayy
      * @param string $type
      *                      <p>The join type, like "LEFT", "INNER", "OUTER".</p>
      *
-     * @return static
+     * @return $this
      */
     public function join(string $table, string $on, string $type = 'LEFT'): self
     {
@@ -1181,7 +1138,7 @@ abstract class ActiveRecord extends Arrayy
      *
      * @param mixed ...$args
      *
-     * @return static
+     * @return $this
      */
     public function orderBy(...$args): self
     {
@@ -1252,7 +1209,7 @@ abstract class ActiveRecord extends Arrayy
      *                        stored expressions add into WHERE, otherwise it will stored the expressions into an
      *                        array.</p>
      *
-     * @return static
+     * @return $this
      */
     public function wrap($op = null): self
     {
@@ -1277,6 +1234,338 @@ abstract class ActiveRecord extends Arrayy
         } else {
             $this->wrap = true;
         }
+
+        return $this;
+    }
+
+    /**
+     * @param string $dbProperty
+     *
+     * @return $this
+     */
+    public function select(string $dbProperty): self
+    {
+        $this->__call('select', [$dbProperty]);
+
+        return $this;
+    }
+
+    /**
+     * @param string                $dbProperty
+     * @param float|int|string|null $value
+     *
+     * @return $this
+     */
+    public function eq(string $dbProperty, $value = null): self
+    {
+        $this->__call('eq', [$dbProperty, $value]);
+
+        return $this;
+    }
+
+    /**
+     * @param string $table
+     *
+     * @return $this
+     */
+    public function from(string $table): self
+    {
+        $this->__call('from', [$table]);
+
+        return $this;
+    }
+
+    /**
+     * @param string $where
+     * @param null   $dummy
+     *
+     * @return $this
+     */
+    public function where(string $where, $dummy = null): Arrayy
+    {
+        $this->__call('where', [$where]);
+
+        return $this;
+    }
+
+    /**
+     * @param string $having
+     *
+     * @return $this
+     */
+    public function having(string $having): self
+    {
+        $this->__call('having', [$having]);
+
+        return $this;
+    }
+
+    /**
+     * @param int      $start
+     * @param int|null $end
+     *
+     * @return $this
+     */
+    public function limit(int $start, $end = null): self
+    {
+        $this->__call('limit', [$start, $end]);
+
+        return $this;
+    }
+
+    /**
+     * @param string                $dbProperty
+     * @param float|int|string|null $value
+     *
+     * @return $this
+     */
+    public function equal(string $dbProperty, $value): self
+    {
+        $this->__call('equal', [$dbProperty, $value]);
+
+        return $this;
+    }
+
+    /**
+     * @param string                $dbProperty
+     * @param float|int|string|null $value
+     *
+     * @return $this
+     */
+    public function notEqual(string $dbProperty, $value): self
+    {
+        $this->__call('notEqual', [$dbProperty, $value]);
+
+        return $this;
+    }
+
+    /**
+     * @param string                $dbProperty
+     * @param float|int|string|null $value
+     *
+     * @return $this
+     */
+    public function ne(string $dbProperty, $value): self
+    {
+        $this->__call('ne', [$dbProperty, $value]);
+
+        return $this;
+    }
+
+    /**
+     * @param string    $dbProperty
+     * @param float|int $value
+     *
+     * @return $this
+     */
+    public function greaterThan(string $dbProperty, $value): self
+    {
+        $this->__call('greaterThan', [$dbProperty, $value]);
+
+        return $this;
+    }
+
+    /**
+     * @param string    $dbProperty
+     * @param float|int $value
+     *
+     * @return $this
+     */
+    public function gt(string $dbProperty, $value): self
+    {
+        $this->__call('gt', [$dbProperty, $value]);
+
+        return $this;
+    }
+
+    /**
+     * @param string    $dbProperty
+     * @param float|int $value
+     *
+     * @return $this
+     */
+    public function lessThan(string $dbProperty, $value): self
+    {
+        $this->__call('lessThan', [$dbProperty, $value]);
+
+        return $this;
+    }
+
+    /**
+     * @param string    $dbProperty
+     * @param float|int $value
+     *
+     * @return $this
+     */
+    public function lt(string $dbProperty, $value): self
+    {
+        $this->__call('lt', [$dbProperty, $value]);
+
+        return $this;
+    }
+
+    /**
+     * @param string    $dbProperty
+     * @param float|int $value
+     *
+     * @return $this
+     */
+    public function greaterThanOrEqual(string $dbProperty, $value): self
+    {
+        $this->__call('greaterThanOrEqual', [$dbProperty, $value]);
+
+        return $this;
+    }
+
+    /**
+     * @param string    $dbProperty
+     * @param float|int $value
+     *
+     * @return $this
+     */
+    public function ge(string $dbProperty, $value): self
+    {
+        $this->__call('ge', [$dbProperty, $value]);
+
+        return $this;
+    }
+
+    /**
+     * @param string    $dbProperty
+     * @param float|int $value
+     *
+     * @return $this
+     */
+    public function gte(string $dbProperty, $value): self
+    {
+        $this->__call('gte', [$dbProperty, $value]);
+
+        return $this;
+    }
+
+    /**
+     * @param string    $dbProperty
+     * @param float|int $value
+     *
+     * @return $this
+     */
+    public function lessThanOrEqual(string $dbProperty, $value): self
+    {
+        $this->__call('lessThanOrEqual', [$dbProperty, $value]);
+
+        return $this;
+    }
+
+    /**
+     * @param string    $dbProperty
+     * @param float|int $value
+     *
+     * @return $this
+     */
+    public function le(string $dbProperty, $value): self
+    {
+        $this->__call('le', [$dbProperty, $value]);
+
+        return $this;
+    }
+
+    /**
+     * @param string    $dbProperty
+     * @param float|int $value
+     *
+     * @return $this
+     */
+    public function lte(string $dbProperty, $value): self
+    {
+        $this->__call('lte', [$dbProperty, $value]);
+
+        return $this;
+    }
+
+    /**
+     * @param string                            $dbProperty
+     * @param array<int, float|int|string|null> $value
+     *
+     * @return $this
+     */
+    public function between(string $dbProperty, array $value): self
+    {
+        $this->__call('between', [$dbProperty, $value]);
+
+        return $this;
+    }
+
+    /**
+     * @param string $dbProperty
+     * @param string $value
+     *
+     * @return $this
+     */
+    public function like(string $dbProperty, string $value): self
+    {
+        $this->__call('like', [$dbProperty, $value]);
+
+        return $this;
+    }
+
+    /**
+     * @param string                            $dbProperty
+     * @param array<int, float|int|string|null> $value
+     *
+     * @return $this
+     */
+    public function in(string $dbProperty, array $value): self
+    {
+        $this->__call('in', [$dbProperty, $value]);
+
+        return $this;
+    }
+
+    /**
+     * @param string                            $dbProperty
+     * @param array<int, float|int|string|null> $value
+     *
+     * @return $this
+     */
+    public function notIn(string $dbProperty, array $value): self
+    {
+        $this->__call('notIn', [$dbProperty, $value]);
+
+        return $this;
+    }
+
+    /**
+     * @param string $dbProperty
+     *
+     * @return $this
+     */
+    public function isNull(string $dbProperty): self
+    {
+        $this->__call('isNull', [$dbProperty]);
+
+        return $this;
+    }
+
+    /**
+     * @param string $dbProperty
+     *
+     * @return $this
+     */
+    public function isNotNull(string $dbProperty): self
+    {
+        $this->__call('isNotNull', [$dbProperty]);
+
+        return $this;
+    }
+
+    /**
+     * @param string $dbProperty
+     *
+     * @return $this
+     */
+    public function notNull(string $dbProperty): self
+    {
+        $this->__call('notNull', [$dbProperty]);
 
         return $this;
     }
@@ -1542,6 +1831,8 @@ abstract class ActiveRecord extends Arrayy
      *                          </p>
      *
      * @return CollectionActiveRecord|false|\Generator|static|static[]
+     *
+     * @noinspection PhpInconsistentReturnPointsInspection
      */
     private function query(
         string $sql,

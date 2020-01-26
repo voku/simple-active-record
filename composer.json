@@ -20,7 +20,7 @@
   ],
   "require": {
     "php": ">=7.0",
-    "voku/arrayy": "~6.0",
+    "voku/arrayy": "~7.0",
     "voku/simple-mysqli": "~8.0",
     "hashids/hashids": "~2.0 || ~3.0 || ~4.0"
   },
