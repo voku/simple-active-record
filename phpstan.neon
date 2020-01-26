@@ -1,5 +1,10 @@
 parameters:
+    level: max
     reportUnmatchedIgnoredErrors: false
+    checkGenericClassInNonGenericObjectType: false
+    checkMissingIterableValueType: false
+    paths:
+        - %currentWorkingDirectory%/src/
     excludes_analyse:
         - %currentWorkingDirectory%/vendor/*
         - %currentWorkingDirectory%/tests/*
@@ -7,8 +12,9 @@ parameters:
         - %currentWorkingDirectory%/vendor/autoload.php
     ignoreErrors:
         - '/private method count\(\) of parent class Arrayy\\Arrayy/'
-        - '/Arrayy\\Arrayy::createFromGeneratorFunction\(\) expects callable/'
         - '/only iterables are supported/'
         - '/iterable<static/'
         - '/Parameter #1 \$function of function call_user_func_array expects callable\(\)/'
         - '/Cannot call method implode\(\) on string\|voku\\db\\ActiveRecordExpressions/'
+        - '/bound type \(int\|string\) is not supported/'
+        - '/set\(\) expects TKey, string given/'

@@ -29,7 +29,7 @@ matrix:
       env: DB=mariadb
       addons:
         mariadb: 10.3
-    - php: 7.4snapshot
+    - php: 7.4
       env: DB=mariadb
       addons:
         mariadb: 10.3
@@ -44,14 +44,14 @@ before_script:
   - travis_retry mysql -e 'USE mysql_test; CREATE TABLE test_page ( page_id int(16) NOT NULL auto_increment, page_template varchar(255), page_type varchar(255), PRIMARY KEY (page_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'
   - travis_retry composer self-update
   - travis_retry composer require satooshi/php-coveralls
-  - travis_retry composer require phpstan/phpstan-shim
+  - if [ "$(phpenv version-name)" == 7.3 ]; then travis_retry composer require phpstan/phpstan; fi
   - travis_retry composer install --no-interaction --prefer-source
   - composer dump-autoload -o
 
 script:
   - mkdir -p build/logs
   - php vendor/bin/phpunit --verbose -c phpunit.xml
-  - php vendor/bin/phpstan analyse --level=7 --configuration=phpstan.neon src
+  - if [ "$(phpenv version-name)" == 7.3 ]; then php vendor/bin/phpstan analyse; fi
 
 after_script:
   - php vendor/bin/coveralls -v

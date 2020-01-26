@@ -15,6 +15,10 @@ use voku\db\exceptions\FetchOneButFoundNone;
 
 /**
  * A simple implement of active record via Arrayy.
+ *
+ * @template TKey of array-key
+ * @template T
+ * @extends  Arrayy<TKey,T>
  */
 abstract class ActiveRecord extends Arrayy
 {
@@ -250,6 +254,8 @@ abstract class ActiveRecord extends Arrayy
      *                                                       to
      *                                                       true, otherwise this option didn't not work anyway.
      *                                                       </p>
+     *
+     * @psalm-param class-string<\Arrayy\ArrayyIterator> $iteratorClass
      */
     public function __construct(
         $data = [],
@@ -300,6 +306,8 @@ abstract class ActiveRecord extends Arrayy
      *
      * @param string $var
      * @param mixed  $val
+     *
+     * @return void
      */
     public function __set($var, $val)
     {
@@ -489,7 +497,7 @@ abstract class ActiveRecord extends Arrayy
     /**
      * Function to find all records in database.
      *
-     * @param array|null $ids
+     * @param array<int, float|int|string|null>|null $ids
      *                        <p>
      *                        If call this function using this param, we will find the record by using this id's.
      *                        If not set, just find all records in database.
@@ -526,7 +534,7 @@ abstract class ActiveRecord extends Arrayy
     /**
      * Function to find all records in database.
      *
-     * @param array|null $ids
+     * @param array<int, int|string>|null $ids
      *                        <p>
      *                        If call this function using this param, we will find the record by using this id's.
      *                        If not set, just find all records in database.
@@ -817,7 +825,7 @@ abstract class ActiveRecord extends Arrayy
     }
 
     /**
-     * @param array $ids
+     * @param array<int, int|string> $ids
      *
      * @return CollectionActiveRecord|static[]
      */
@@ -993,10 +1001,14 @@ abstract class ActiveRecord extends Arrayy
 
     /**
      * @param string $table
+     *
+     * @return $this
      */
-    public function setTable(string $table)
+    public function setTable(string $table): self
     {
         $this->table = $table;
+
+        return $this;
     }
 
     /**
@@ -1026,6 +1038,8 @@ abstract class ActiveRecord extends Arrayy
      *                                <p>The operator to concat this Expressions into WHERE or SET statement.</p>
      * @param string $name
      *                                <p>The Expression will contact to.</p>
+     *
+     * @return $this
      */
     public function addCondition(
         string $field,
@@ -1033,7 +1047,7 @@ abstract class ActiveRecord extends Arrayy
         $value,
         string $operator_concat = 'AND',
         string $name = self::SQL_WHERE
-    ) {
+    ): self {
         $field = '`' . $field . '`';
         $value = $this->_filterParam($value);
 
@@ -1081,6 +1095,8 @@ abstract class ActiveRecord extends Arrayy
         } else {
             $this->_addCondition($expression, $operator_concat, $name);
         }
+
+        return $this;
     }
 
     /**
@@ -1093,6 +1109,10 @@ abstract class ActiveRecord extends Arrayy
 
     /**
      * @param bool $bool
+     *
+     * @return void
+     *
+     * @internal use it only if you know what you are doing
      */
     public function setNewDataAreDirty(bool $bool)
     {
@@ -1151,10 +1171,14 @@ abstract class ActiveRecord extends Arrayy
      * set the DB connection.
      *
      * @param DB $db
+     *
+     * @return $this;
      */
-    public function setDb(DB $db)
+    public function setDb(DB $db): self
     {
         $this->db = $db;
+
+        return $this;
     }
 
     /**
@@ -1570,6 +1594,9 @@ abstract class ActiveRecord extends Arrayy
         return $this;
     }
 
+    /**
+     * @return void
+     */
     protected function init()
     {
         // can be overwritten in sub-classes
@@ -1594,6 +1621,8 @@ abstract class ActiveRecord extends Arrayy
      * @param string            $foreign_key_of_child
      * @param array|null        $array_of_sql_part_functions
      * @param ActiveRecord|null $backref
+     *
+     * @return void
      *
      * @throws \InvalidArgumentException
      */
@@ -1751,6 +1780,8 @@ abstract class ActiveRecord extends Arrayy
      *                                          <p>The expression will be stored.</p>
      * @param string                  $operator
      *                                          <p>The operator to concat this Expressions into WHERE statement.</p>
+     *
+     * @return void
      */
     protected function _addExpression(ActiveRecordExpressions $exp, string $operator)
     {
@@ -1780,6 +1811,8 @@ abstract class ActiveRecord extends Arrayy
      *                                            statement.</p>
      * @param string                  $name
      *                                            <p>The Expression will contact to.</p>
+     *
+     * @return void
      */
     protected function _addCondition(
         ActiveRecordExpressions $expression,
@@ -1876,7 +1909,7 @@ abstract class ActiveRecord extends Arrayy
 
         $tmpCollection = null;
         if (!$single) {
-            if ($yield) {
+            if (\is_callable($return)) {
                 $tmpCollection = CollectionActiveRecord::createFromGeneratorFunction(
                     $return
                 );
@@ -1896,6 +1929,8 @@ abstract class ActiveRecord extends Arrayy
     /**
      * @param string                           $sqlPart
      * @param \voku\db\ActiveRecordExpressions $expressions
+     *
+     * @return void
      */
     private function setSqlExpressionHelper(string $sqlPart, ActiveRecordExpressions $expressions)
     {
@@ -1921,6 +1956,8 @@ abstract class ActiveRecord extends Arrayy
      *                                <p>The index of $n in $sql array.</p>
      * @param self   $active_record
      *                                <p>The reference to $this.</p>
+     *
+     * @return void
      */
     private function _buildSqlCallback(string &$sql_string_part, int $index, self $active_record)
     {
