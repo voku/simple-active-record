@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.7.0 (2020-01-27)
+------------------
+- update vendor libs
+- do less magic
+
 1.6.0 (2019-11-29)
 ------------------
 - update vendor libs
