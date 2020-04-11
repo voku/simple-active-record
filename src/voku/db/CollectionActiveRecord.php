@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace voku\db;
 
 /**
- * @internal
+ * @template TKey of array-key
+ * @template T
+ * @extends  \Arrayy\Collection\AbstractCollection<TKey,T>
  */
 final class CollectionActiveRecord extends \Arrayy\Collection\AbstractCollection
 {
@@ -16,6 +18,7 @@ final class CollectionActiveRecord extends \Arrayy\Collection\AbstractCollection
 
     /**
      * @return ActiveRecord[]
+     * @psalm-return ActiveRecord[]|array<TKey,T>
      */
     public function getAll(): array
     {
@@ -24,6 +27,7 @@ final class CollectionActiveRecord extends \Arrayy\Collection\AbstractCollection
 
     /**
      * @return ActiveRecord[]|\Generator
+     * @psalm-return \Generator<mixed,T>|\Generator<TKey,T>
      */
     public function getGenerator(): \Generator
     {

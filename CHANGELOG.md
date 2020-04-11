@@ -1,10 +1,14 @@
 Changelog
 =========
 
+1.8.0 (2020-04-11)
+------------------
+- add new "whereEscape()" method
+- use db->escape()
+
 1.7.1 (2020-01-27)
 ------------------
 - fix bugs reported by phpstan
-
 
 1.7.0 (2020-01-27)
 ------------------

@@ -311,6 +311,10 @@ abstract class ActiveRecord extends Arrayy
      */
     public function __set($var, $val)
     {
+        if (!$this->db instanceof DB) {
+            $this->db = DB::getInstance();
+        }
+
         if (
             \array_key_exists($var, $this->sqlExpressions)
             ||
@@ -328,7 +332,7 @@ abstract class ActiveRecord extends Arrayy
             $this->set($var, $val);
 
             if ($this->new_data_are_dirty === true) {
-                $this->dirty[$var] = $val;
+                $this->dirty[$var] = $this->db->escape($val);
             }
         }
     }
@@ -359,7 +363,7 @@ abstract class ActiveRecord extends Arrayy
             $this->addCondition(
                 $args[0],
                 self::$operators[$nameTmp],
-                $args[1] ?? null,
+                isset($args[1]) ? $this->db->escape($args[1]) : null,
                 \is_string(\end($args)) && \strtolower(\end($args)) === 'or' ? 'OR' : 'AND'
             );
         } elseif (\array_key_exists($nameTmp, $this->sqlParts)) {
@@ -498,12 +502,13 @@ abstract class ActiveRecord extends Arrayy
      * Function to find all records in database.
      *
      * @param array<int, float|int|string|null>|null $ids
-     *                        <p>
-     *                        If call this function using this param, we will find the record by using this id's.
-     *                        If not set, just find all records in database.
-     *                        </p>
+     *                                                    <p>
+     *                                                    If call this function using this param, we will find the record by using this id's.
+     *                                                    If not set, just find all records in database.
+     *                                                    </p>
      *
      * @return CollectionActiveRecord|\Generator|static[]
+     * @psalm-return CollectionActiveRecord<TKey,T>
      */
     public function yieldAll(array $ids = null)
     {
@@ -535,12 +540,13 @@ abstract class ActiveRecord extends Arrayy
      * Function to find all records in database.
      *
      * @param array<int, int|string>|null $ids
-     *                        <p>
-     *                        If call this function using this param, we will find the record by using this id's.
-     *                        If not set, just find all records in database.
-     *                        </p>
+     *                                         <p>
+     *                                         If call this function using this param, we will find the record by using this id's.
+     *                                         If not set, just find all records in database.
+     *                                         </p>
      *
      * @return CollectionActiveRecord|\Generator|static[]
+     * @psalm-return CollectionActiveRecord<TKey,T>
      */
     public function fetchAll(array $ids = null)
     {
@@ -598,12 +604,16 @@ abstract class ActiveRecord extends Arrayy
      */
     public function setPrimaryKey($primaryKey, bool $dirty = true): self
     {
+        if (!$this->db instanceof DB) {
+            $this->db = DB::getInstance();
+        }
+
         if (\property_exists($this, $this->primaryKeyName)) {
             $this->{$this->primaryKeyName} = $primaryKey;
         }
 
         if ($dirty === true) {
-            $this->dirty[$this->primaryKeyName] = $primaryKey;
+            $this->dirty[$this->primaryKeyName] = $this->db->escape($primaryKey);
         } else {
             $this->array[$this->primaryKeyName] = $primaryKey;
         }
@@ -637,6 +647,7 @@ abstract class ActiveRecord extends Arrayy
             $fields['`' . $fieldTmp . '`'] = $valueTmp;
         }
 
+        /** @noinspection SqlNoDataSourceInspection */
         $this->setSqlExpressionHelper(
             self::SQL_INSERT,
             new ActiveRecordExpressions(
@@ -828,6 +839,7 @@ abstract class ActiveRecord extends Arrayy
      * @param array<int, int|string> $ids
      *
      * @return CollectionActiveRecord|static[]
+     * @psalm-return CollectionActiveRecord<TKey,T>
      */
     public function fetchByIds(array $ids)
     {
@@ -835,19 +847,14 @@ abstract class ActiveRecord extends Arrayy
             return new CollectionActiveRecord();
         }
 
-        $list = $this->fetchAll($ids);
-
-        if ($list instanceof CollectionActiveRecord) {
-            return $list;
-        }
-
-        return new CollectionActiveRecord();
+        return $this->fetchAll($ids);
     }
 
     /**
      * @param array $ids
      *
      * @return CollectionActiveRecord|\Generator|static[]
+     * @psalm-return CollectionActiveRecord<TKey,T>
      *
      * @noinspection PhpInconsistentReturnPointsInspection
      */
@@ -883,6 +890,7 @@ abstract class ActiveRecord extends Arrayy
      * @param string $query
      *
      * @return CollectionActiveRecord|\Generator|static[]
+     * @psalm-return CollectionActiveRecord<TKey,T>
      */
     public function fetchManyByQuery(string $query)
     {
@@ -899,6 +907,7 @@ abstract class ActiveRecord extends Arrayy
      * @param string $query
      *
      * @return CollectionActiveRecord|\Generator|static|static[]
+     * @psalm-return CollectionActiveRecord<TKey,T>|static|static[]
      */
     public function fetchByQuery(string $query)
     {
@@ -1300,10 +1309,39 @@ abstract class ActiveRecord extends Arrayy
     }
 
     /**
+     * @param array ...$where
+     *
+     * @psalm-param array<string, int|float|null|string> ...$where
+     *
+     * @return $this
+     *
+     * @noinspection PhpDocSignatureInspection
+     */
+    public function whereEscape(array ...$where): Arrayy
+    {
+        if (!$this->db instanceof DB) {
+            $this->db = DB::getInstance();
+        }
+
+        // init
+        $whereStr = '';
+        foreach ($where as $whereTmp) {
+            $whereStr .= $this->db->_parseArrayPair($whereTmp, 'AND');
+        }
+
+        $this->__call('where', [$whereStr]);
+
+        return $this;
+    }
+
+    /**
      * @param string $where
      * @param null   $dummy
      *
      * @return $this
+     *
+     * @deprecated please use "whereEscape()"
+     * @noinspection OverridingDeprecatedMethodInspection
      */
     public function where(string $where, $dummy = null): Arrayy
     {
@@ -1332,7 +1370,7 @@ abstract class ActiveRecord extends Arrayy
      */
     public function limit(int $start, $end = null): self
     {
-        $this->__call('limit', [$start, $end]);
+        $this->__call('limit', [$start, $end !== null ? (int) $end : $end]);
 
         return $this;
     }
@@ -1864,6 +1902,7 @@ abstract class ActiveRecord extends Arrayy
      *                          </p>
      *
      * @return CollectionActiveRecord|false|\Generator|static|static[]
+     * @psalm-return CollectionActiveRecord<TKey,T>|false|static|static[]
      *
      * @noinspection PhpInconsistentReturnPointsInspection
      */
@@ -1958,6 +1997,8 @@ abstract class ActiveRecord extends Arrayy
      *                                <p>The reference to $this.</p>
      *
      * @return void
+     *
+     * @noinspection PhpUnusedParameterInspection
      */
     private function _buildSqlCallback(string &$sql_string_part, int $index, self $active_record)
     {

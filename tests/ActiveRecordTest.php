@@ -592,6 +592,32 @@ final class ActiveRecordTest extends \PHPUnit\Framework\TestCase
         static::assertSame($contact->user_id, $user->id);
         static::assertSame($contact->user_id, $user->getPrimaryKey());
         static::assertSame('demo1', $user->name);
+
+        // ---
+
+        $user = new FoobarUser();
+        $user->whereEscape(['id' => $contact->user_id])->orderBy('id DESC', 'name ASC')->limit(2, 1)->fetch();
+
+        // email and address will stored in user data array.
+        static::assertSame($contact->user_id, $user->id);
+        static::assertSame($contact->user_id, $user->getPrimaryKey());
+        static::assertSame('demo1', $user->name);
+
+        // ---
+
+        $user = new FoobarUser();
+        $where = [
+            'id ='           => $contact->user_id,
+            'id >='          => $contact->user_id,
+            'name NOT LIKE'  => '%öäü123',
+        ];
+        $user->whereEscape($where)->orderBy('id DESC', 'name ASC')->limit(2, 1)->fetch();
+
+        // email and address will stored in user data array.
+        static::assertSame($contact->user_id, $user->id);
+        static::assertSame($contact->user_id, $user->getPrimaryKey());
+        static::assertSame('demo1', $user->name);
+
     }
 
     /**
