@@ -1,0 +1,34 @@
+name: PHP dependency validation
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  composer:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up PHP
+        uses: shivammathur/setup-php@2.35.5
+        with:
+          php-version: '7.4'
+          extensions: mysqli, mbstring
+          coverage: none
+          tools: composer:v2
+      - name: Validate Composer manifest
+        run: composer validate --no-check-publish --no-check-all --no-check-lock --no-interaction
+      - name: Resolve production dependencies
+        run: composer update --no-dev --no-interaction --prefer-dist --no-progress --no-audit
+      - name: Verify production autoloading
+        run: |
+          composer dump-autoload --no-dev --optimize --no-interaction
+          php -r "require 'vendor/autoload.php'; if (!class_exists('voku\\db\\DB')) { fwrite(STDERR, 'Missing DB class'.PHP_EOL); exit(1); }"
