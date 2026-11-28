@@ -18,7 +18,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up PHP
-        uses: shivammathur/setup-php@2.35.5
+        uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # 2.35.5
         with:
           php-version: '7.4'
           extensions: mysqli, mbstring
@@ -26,9 +26,29 @@ jobs:
           tools: composer:v2
       - name: Validate Composer manifest
         run: composer validate --no-check-publish --no-check-all --no-check-lock --no-interaction
-      - name: Resolve production dependencies
-        run: composer update --no-dev --no-interaction --prefer-dist --no-progress --no-audit
-      - name: Verify production autoloading
+      - name: Resolve and smoke-test production dependencies as a consumer
         run: |
-          composer dump-autoload --no-dev --optimize --no-interaction
-          php -r "require 'vendor/autoload.php'; if (!class_exists('voku\\db\\DB')) { fwrite(STDERR, 'Missing DB class'.PHP_EOL); exit(1); }"
+          # A library's require-dev is not resolved when installed by a consumer.
+          # This is not a substitute for the legacy PHPUnit suite or its security remediation.
+          consumer="$(mktemp -d "$RUNNER_TEMP/active-record-consumer.XXXXXX")"
+          cd "$consumer"
+          php -r '
+            $manifest = [
+                "repositories" => [[
+                    "type" => "path",
+                    "url" => getenv("GITHUB_WORKSPACE"),
+                    "options" => [
+                        "symlink" => false,
+                        "versions" => ["voku/simple-active-record" => "dev-ci"],
+                    ],
+                ]],
+                "require" => ["voku/simple-active-record" => "dev-ci"],
+            ];
+            if (file_put_contents("composer.json", json_encode($manifest, JSON_THROW_ON_ERROR)) === false) {
+                exit(1);
+            }
+          '
+          composer update --no-dev --no-interaction --prefer-dist --no-progress
+          composer check-platform-reqs --no-dev
+          composer audit --no-dev --no-interaction
+          php -r 'require "vendor/autoload.php"; if (!class_exists("voku\\db\\ActiveRecord") || !class_exists("voku\\db\\DB")) { fwrite(STDERR, "Missing ActiveRecord or DB class".PHP_EOL); exit(1); }'
