@@ -1,0 +1,54 @@
+name: PHP dependency validation
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  composer:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up PHP
+        uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # 2.35.5
+        with:
+          php-version: '7.4'
+          extensions: mysqli, mbstring
+          coverage: none
+          tools: composer:v2
+      - name: Validate Composer manifest
+        run: composer validate --no-check-publish --no-check-all --no-check-lock --no-interaction
+      - name: Resolve and smoke-test production dependencies as a consumer
+        run: |
+          # A library's require-dev is not resolved when installed by a consumer.
+          # This is not a substitute for the legacy PHPUnit suite or its security remediation.
+          consumer="$(mktemp -d "$RUNNER_TEMP/active-record-consumer.XXXXXX")"
+          cd "$consumer"
+          php -r '
+            $manifest = [
+                "repositories" => [[
+                    "type" => "path",
+                    "url" => getenv("GITHUB_WORKSPACE"),
+                    "options" => [
+                        "symlink" => false,
+                        "versions" => ["voku/simple-active-record" => "dev-ci"],
+                    ],
+                ]],
+                "require" => ["voku/simple-active-record" => "dev-ci"],
+            ];
+            if (file_put_contents("composer.json", json_encode($manifest, JSON_THROW_ON_ERROR)) === false) {
+                exit(1);
+            }
+          '
+          composer update --no-dev --no-interaction --prefer-dist --no-progress
+          composer check-platform-reqs --no-dev
+          composer audit --no-dev --no-interaction
+          php -r 'require "vendor/autoload.php"; if (!class_exists("voku\\db\\ActiveRecord") || !class_exists("voku\\db\\DB")) { fwrite(STDERR, "Missing ActiveRecord or DB class".PHP_EOL); exit(1); }'
